@@ -92,7 +92,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
   const level       = profile?.level ?? 1;
   const xp          = profile?.xp ?? 0;
   const streakDays  = profile?.streak_days ?? 0;
-  const displayName = profile?.full_name?.split(' ')[0] ?? 'Jason';
 
   // Business stats
   const totalClients  = allTimeStats?.totalClientsClosed ?? 0;
@@ -102,9 +101,69 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
   const todayContent  = todayMetrics?.content_posted ?? 0;
   const todayHours    = todayMetrics?.hours_worked ?? 0;
 
-  // Time-based greeting
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  // Cocky randomized greeting pool — changes every dashboard load
+  const greeting = (() => {
+    const month = new Date().getMonth() + 1; // 1-12
+
+    const general = [
+      'Jason, enough excuses.', 'Jason, clock\'s ticking.', 'Jason, no bullshit.',
+      'Jason, move.', 'Jason, lock in.', 'Jason, execute.', 'Jason, build.',
+      'Jason, prove it.', 'Jason, fix this.', 'Jason, back to work.',
+      'Jason, we\'re building.', 'Jason, get serious.', 'Jason, stop negotiating.',
+      'Jason, make it count.', 'Jason, go earn it.', 'Jason, no mercy.',
+      'Jason, stay dangerous.', 'Jason, quit stalling.', 'Jason, make them nervous.',
+      'Jason, let\'s cause problems.', 'Jason, ship something.', 'Jason, enough planning.',
+      'Jason, we\'re not done.', 'Jason, time\'s expensive.', 'Jason, don\'t waste this.',
+      'Jason, use it.', 'Jason, don\'t blink.', 'Jason, turn it around.',
+      'Jason, make the comeback.', 'Jason, you\'ve got one job.', 'Jason, finish strong.',
+      'Jason, clean it up.', 'Jason, now we work.', 'Jason, let\'s clean house.',
+      'Jason, make today useful.', 'Jason, we\'re cooking.', 'Jason, make today hurt.',
+      'Jason, execution time.', 'Jason, your future\'s watching.', 'Jason, the clock noticed.',
+      'Jason, stop dreaming.', 'Jason, earn it.', 'Jason, close something.',
+      'Jason, dial.', 'Jason, pitch.', 'Jason, collect.', 'Jason, you know the drill.',
+      'Jason, time to collect.', 'Jason, don\'t fold.', 'Jason, stay sharp.',
+      'Jason, stop waiting.', 'Jason, we built this.', 'Jason, keep building.',
+      'Jason, no soft days.', 'Jason, make the call.', 'Jason, close the gap.',
+      'Jason, we\'re on the clock.', 'Jason, be relentless.', 'Jason, show up.',
+      'Jason, do the work.', 'Jason, run it.', 'Jason, stack the wins.',
+    ];
+
+    const monthly: Record<number, string[]> = {
+      9: [
+        'Jason, four months.', 'Jason, September\'s yours.', 'Jason, start the comeback.',
+        'Jason, September isn\'t waiting.', 'Jason, don\'t waste September.',
+        'Jason, four months. Move.', 'Jason, four months. That\'s enough.',
+        'Jason, make the next four count.', 'Jason, we\'ve got September.',
+        'Jason, September. Lock in.', 'Jason, four months left. Use them.',
+      ],
+      10: [
+        'Jason, three months.', 'Jason, October won\'t wait.', 'Jason, clock\'s getting loud.',
+        'Jason, three months. Execute.', 'Jason, October means business.',
+        'Jason, don\'t waste October.', 'Jason, three months to prove it.',
+        'Jason, October. No mercy.', 'Jason, Q4. Lock in.',
+      ],
+      11: [
+        'Jason, two months.', 'Jason, November means business.', 'Jason, we\'re running out.',
+        'Jason, two months. Close.', 'Jason, don\'t waste November.',
+        'Jason, November. No excuses.', 'Jason, two months to finish this.',
+        'Jason, November. Final sprint.', 'Jason, the year is almost done.',
+      ],
+      12: [
+        'Jason, last lap.', 'Jason, finish the job.', 'Jason, don\'t waste December.',
+        'Jason, one month. Final push.', 'Jason, close out the year.',
+        'Jason, December. Make it count.', 'Jason, last chance this year.',
+        'Jason, end strong.', 'Jason, December. No regrets.', 'Jason, finish what you started.',
+      ],
+    };
+
+    const pool = [...general, ...(monthly[month] ?? [])];
+    const lastKey = 'build100_last_greeting';
+    const last = sessionStorage.getItem(lastKey) ?? '';
+    const available = pool.filter(g => g !== last);
+    const chosen = available[Math.floor(Math.random() * available.length)];
+    sessionStorage.setItem(lastKey, chosen);
+    return chosen;
+  })();
 
   return (
     <div className="dashboard-page layout-2col">
@@ -115,7 +174,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
           <div className="operator-top-row">
             <div className="operator-greeting-group">
               <span className="system-badge">BUILD100 OS</span>
-              <h1 className="operator-greeting">{greeting}, {displayName}.</h1>
+              <h1 className="operator-greeting">{greeting}</h1>
               {streakDays > 0 && <div className="operator-day-tag">Day {streakDays}.</div>}
             </div>
 

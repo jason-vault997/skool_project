@@ -1,233 +1,115 @@
-.classroom-page {
+/* ============================================================
+   BUILD100 — Classroom Page v3
+   Layout: Sidebar (300px fixed) + Main content area (flex-1)
+   ============================================================ */
+
+.classroom-page-v3 {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  height: calc(100vh - var(--header-height, 56px) - var(--nav-height, 44px));
+  overflow: hidden;
 }
 
-.classroom-header-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--border-light);
-}
-
-.classroom-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.classroom-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--brand-green);
-  font-size: var(--font-size-xs);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.category-filter-pills {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.pill-btn {
-  padding: 6px 14px;
-  background: #ffffff;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  color: var(--text-secondary);
-  transition: all var(--transition-fast);
-}
-
-.pill-btn:hover {
-  border-color: var(--border-dark);
-  color: var(--text-primary);
-}
-
-.pill-btn.active {
-  background: var(--brand-green-dark);
-  color: var(--brand-lime);
-  border-color: var(--brand-green-dark);
-}
-
-/* Category Sections & Grid */
-.classroom-category-sections {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-}
-
-.category-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.category-section-header {
-  display: flex;
+/* Mobile top bar (hidden on desktop) */
+.classroom-mobile-topbar {
+  display: none;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: var(--space-2);
+  gap: 12px;
+  padding: 10px 16px;
+  background: #fff;
   border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
 }
 
-.category-title {
-  font-size: var(--font-size-md);
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--text-primary);
-}
-
-.category-track-count {
-  font-size: var(--font-size-xs);
+.classroom-mobile-lesson-name {
+  font-size: 13px;
   font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.classroom-mobile-nav-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Main layout */
+.classroom-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Main content (right panel) ── */
+.classroom-main {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg-app);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.classroom-main::-webkit-scrollbar { width: 4px; }
+.classroom-main::-webkit-scrollbar-track { background: transparent; }
+.classroom-main::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 4px;
+}
+
+/* Empty state */
+.classroom-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  height: 100%;
   color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
 }
 
-.courses-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-5);
-}
-
-.single-category-grid {
-  margin-top: var(--space-2);
+/* Loading skeleton */
+.classroom-loading {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 900px) {
-  .courses-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .classroom-page-v3 {
+    height: auto;
+    overflow: visible;
   }
-}
 
-@media (max-width: 600px) {
-  .courses-grid {
-    grid-template-columns: 1fr;
+  .classroom-mobile-topbar {
+    display: flex;
   }
-}
 
-/* Preview Modal */
-.course-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4);
-}
-
-.course-modal-card {
-  width: 100%;
-  max-width: 480px;
-  background: #ffffff;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes modalPop {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
+  .classroom-layout {
+    flex-direction: column;
+    overflow: visible;
   }
-  to {
-    opacity: 1;
-    transform: scale(1);
+
+  .classroom-main {
+    overflow: visible;
   }
-}
 
-.modal-top-thumb {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: var(--brand-green-dark);
-  overflow: hidden;
-}
+  .classroom-sidebar-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-bottom: 1px solid var(--border-light);
+  }
 
-.modal-top-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.modal-body {
-  padding: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.modal-cat-tag {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: var(--brand-green);
-  text-transform: uppercase;
-}
-
-.modal-title {
-  font-size: var(--font-size-xl);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-}
-
-.modal-subtitle {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-.modal-progress-box {
-  background: var(--bg-subtle);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.progress-info-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
-.modal-track {
-  width: 100%;
-  height: 7px;
-  background: #e5e7eb;
-  border-radius: 7px;
-  overflow: hidden;
-}
-
-.modal-fill {
-  height: 100%;
-  background: var(--brand-lime);
-  border-radius: 7px;
-}
-
-.modal-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
-
-.full-w {
-  width: 100%;
-  font-weight: 800;
+  .classroom-sidebar-wrapper.is-mobile-open {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
 }

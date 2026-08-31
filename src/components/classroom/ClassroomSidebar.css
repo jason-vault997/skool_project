@@ -1,0 +1,254 @@
+/* ============================================================
+   Classroom Sidebar
+   3-level hierarchy: Block → Module → Lesson
+   ============================================================ */
+
+.classroom-sidebar {
+  width: 300px;
+  min-width: 300px;
+  height: 100%;
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.classroom-sidebar::-webkit-scrollbar { width: 4px; }
+.classroom-sidebar::-webkit-scrollbar-track { background: transparent; }
+.classroom-sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 4px;
+}
+
+/* Header */
+.sidebar-header {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.sidebar-header-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ── Block (top-level) ── */
+.sidebar-block {
+  border-bottom: 1px solid var(--border-light);
+}
+
+.sidebar-block-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.sidebar-block-btn:hover {
+  background: var(--bg-subtle);
+}
+
+.sidebar-block.is-expanded > .sidebar-block-btn {
+  background: var(--bg-subtle);
+}
+
+.sidebar-block-chevron {
+  color: var(--text-muted);
+  display: flex;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sidebar-block-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  flex: 1;
+  line-height: 1.3;
+}
+
+.sidebar-block-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sidebar-block-pct {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--brand-green);
+  background: var(--brand-lime-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.sidebar-block-count {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Block content area */
+.sidebar-block-content {
+  background: #fafafa;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ── Module (second-level) ── */
+.sidebar-module {
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.sidebar-module:last-child {
+  border-bottom: none;
+}
+
+.sidebar-module-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px 8px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.sidebar-module-btn:hover {
+  background: var(--bg-subtle);
+}
+
+.sidebar-module-chevron {
+  color: var(--text-muted);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.sidebar-module-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex: 1;
+  line-height: 1.3;
+}
+
+.sidebar-module-pct {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--brand-green);
+  flex-shrink: 0;
+}
+
+/* ── Lessons (third-level) ── */
+.sidebar-lessons-list {
+  list-style: none;
+  padding: 2px 0 6px;
+  margin: 0;
+}
+
+.sidebar-lesson-btn {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 6px 14px 6px 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  border-left: 2px solid transparent;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.sidebar-lesson-btn:hover {
+  background: rgba(0,0,0,0.035);
+}
+
+/* Active state */
+.sidebar-lesson-btn.is-active {
+  background: var(--brand-lime-soft);
+  border-left-color: var(--brand-green);
+}
+
+/* Completed state */
+.sidebar-lesson-btn.is-done .sidebar-lesson-icon {
+  color: var(--brand-green);
+}
+
+.sidebar-lesson-btn.is-done .sidebar-lesson-title {
+  color: var(--text-muted);
+}
+
+.sidebar-lesson-icon {
+  display: flex;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+.sidebar-lesson-btn.is-active .sidebar-lesson-icon {
+  color: var(--brand-green);
+}
+
+/* In-progress icon */
+.sidebar-lesson-btn:not(.is-done):not(.is-active) .sidebar-lesson-icon {
+  color: var(--text-muted);
+}
+
+.sidebar-lesson-title {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  flex: 1;
+}
+
+.sidebar-lesson-btn.is-active .sidebar-lesson-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sidebar-lesson-pct {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ── Mobile sidebar drawer ── */
+@media (max-width: 900px) {
+  .classroom-sidebar {
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-light);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .classroom-sidebar.is-mobile-open {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}

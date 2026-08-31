@@ -1,197 +1,204 @@
-import React, { useState, useEffect } from 'react';
-import { CourseCard } from '../components/CourseCard';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Menu, X, BookOpen } from 'lucide-react';
 import { useAuth } from '../lib/auth/AuthContext';
-import { getAllModulesWithProgress } from '../lib/data/modules';
-import type { ModuleWithProgress } from '../lib/supabase/types';
-import { BookOpen } from 'lucide-react';
+import { ClassroomSidebar } from '../components/classroom/ClassroomSidebar';
+import { LessonView } from '../components/classroom/LessonView';
+import {
+  CLASSROOM_DATA,
+  ClassroomBlock,
+  ClassroomModule,
+  ClassroomLesson,
+} from '../data/classroomCMS';
+import {
+  ClassroomProgressRow,
+  getLessonProgressMap,
+  upsertLessonProgress,
+  markLessonComplete,
+  resetLessonProgress,
+} from '../lib/data/classroomProgress';
 import './ClassroomPage.css';
 
-// Shape expected by CourseCard — we map ModuleWithProgress → this
-interface CourseCardData {
-  id: string;
-  category: 'SALES' | 'CONTENT' | 'OFFER';
-  title: string;
-  subtitle: string;
-  thumbnail: string;
-  progress: number;
-  totalLessons: number;
-  completedLessons: number;
+interface ActiveLesson {
+  lesson: ClassroomLesson;
+  block: ClassroomBlock;
+  mod: ClassroomModule;
 }
 
-const TRACK_SLUG_TO_CATEGORY: Record<string, 'SALES' | 'CONTENT' | 'OFFER'> = {
-  sales: 'SALES',
-  content: 'CONTENT',
-  offer: 'OFFER',
-};
+// Resolve a lesson ID back to its full context
+function resolveLessonContext(lessonId: string): ActiveLesson | null {
+  for (const block of CLASSROOM_DATA) {
+    for (const mod of block.modules) {
+      const lesson = mod.lessons.find(l => l.id === lessonId);
+      if (lesson) return { lesson, block, mod };
+    }
+  }
+  return null;
+}
 
-const DEFAULT_THUMBNAILS: Record<string, string> = {
-  sales: '/assets/course-sales.png',
-  content: '/assets/course-content.png',
-  offer: '/assets/course-offer.png',
-};
-
-function mapModuleToCourse(mod: ModuleWithProgress): CourseCardData {
-  const category = TRACK_SLUG_TO_CATEGORY[mod.trackSlug] ?? 'SALES';
-  const thumbnail = mod.thumbnail_url ?? DEFAULT_THUMBNAILS[mod.trackSlug] ?? '/assets/course-sales.png';
-  return {
-    id: mod.id,
-    category,
-    title: mod.title,
-    subtitle: mod.description ?? '',
-    thumbnail,
-    progress: mod.progress,
-    totalLessons: mod.totalLessons,
-    completedLessons: mod.completedLessons,
-  };
+// First lesson in the curriculum
+function getFirstLesson(): ActiveLesson {
+  const block = CLASSROOM_DATA[0];
+  const mod   = block.modules[0];
+  const lesson = mod.lessons[0];
+  return { lesson, block, mod };
 }
 
 export const ClassroomPage: React.FC = () => {
   const { user } = useAuth();
-  const [modules, setModules] = useState<ModuleWithProgress[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<'ALL' | 'SALES' | 'CONTENT' | 'OFFER'>('ALL');
-  const [selectedCourse, setSelectedCourse] = useState<CourseCardData | null>(null);
 
+  const [activeLesson, setActiveLesson]     = useState<ActiveLesson | null>(null);
+  const [progressMap, setProgressMap]       = useState<Map<string, ClassroomProgressRow>>(new Map());
+  const [mobileNavOpen, setMobileNavOpen]   = useState(false);
+  const [progressLoading, setProgressLoading] = useState(true);
+
+  // Load progress from Supabase
   useEffect(() => {
     if (!user) return;
-    setLoadingData(true);
-    getAllModulesWithProgress(user.id)
-      .then((data) => {
-        setModules(data);
-        setError(null);
-      })
-      .catch(() => setError('Could not load curriculum. Please try again.'))
-      .finally(() => setLoadingData(false));
+    setProgressLoading(true);
+    getLessonProgressMap(user.id)
+      .then(map => setProgressMap(map))
+      .finally(() => setProgressLoading(false));
   }, [user]);
 
-  const courses: CourseCardData[] = modules.map(mapModuleToCourse);
+  // Default to first lesson on load
+  useEffect(() => {
+    if (!activeLesson) {
+      setActiveLesson(getFirstLesson());
+    }
+  }, [activeLesson]);
 
-  const salesCourses   = courses.filter(c => c.category === 'SALES');
-  const contentCourses = courses.filter(c => c.category === 'CONTENT');
-  const offerCourses   = courses.filter(c => c.category === 'OFFER');
+  const handleSelectLesson = useCallback((
+    lesson: ClassroomLesson,
+    block: ClassroomBlock,
+    mod: ClassroomModule
+  ) => {
+    setActiveLesson({ lesson, block, mod });
+    setMobileNavOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
-  const filteredCourses = activeCategory === 'ALL'
-    ? courses
-    : courses.filter(c => c.category === activeCategory);
+  const handleNavigateById = useCallback((lessonId: string) => {
+    const ctx = resolveLessonContext(lessonId);
+    if (ctx) {
+      setActiveLesson(ctx);
+      setMobileNavOpen(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
+
+  const handleProgress = useCallback(async (pct: number, posSec: number) => {
+    if (!user || !activeLesson) return;
+    const lid = activeLesson.lesson.id;
+    const completed = pct >= 100;
+    // Optimistic update
+    setProgressMap(prev => {
+      const next = new Map(prev);
+      next.set(lid, {
+        lesson_id: lid,
+        progress_pct: pct,
+        completed,
+        last_pos_sec: posSec,
+        completed_at: completed ? new Date().toISOString() : null,
+      });
+      return next;
+    });
+    await upsertLessonProgress(user.id, lid, pct, posSec, completed);
+  }, [user, activeLesson]);
+
+  const handleComplete = useCallback(async () => {
+    if (!user || !activeLesson) return;
+    const lid = activeLesson.lesson.id;
+    setProgressMap(prev => {
+      const next = new Map(prev);
+      next.set(lid, {
+        lesson_id: lid,
+        progress_pct: 100,
+        completed: true,
+        last_pos_sec: 0,
+        completed_at: new Date().toISOString(),
+      });
+      return next;
+    });
+    await markLessonComplete(user.id, lid);
+  }, [user, activeLesson]);
+
+  const handleReset = useCallback(async () => {
+    if (!user || !activeLesson) return;
+    const lid = activeLesson.lesson.id;
+    setProgressMap(prev => {
+      const next = new Map(prev);
+      next.set(lid, {
+        lesson_id: lid,
+        progress_pct: 0,
+        completed: false,
+        last_pos_sec: 0,
+        completed_at: null,
+      });
+      return next;
+    });
+    await resetLessonProgress(user.id, lid);
+  }, [user, activeLesson]);
+
+  const progressRow = useMemo(
+    () => activeLesson ? progressMap.get(activeLesson.lesson.id) : undefined,
+    [activeLesson, progressMap]
+  );
 
   return (
-    <div className="classroom-page">
-      {/* Classroom Header */}
-      <div className="classroom-header-section">
-        <div className="classroom-title-group">
-          <div className="classroom-badge">
-            <BookOpen size={13} />
-            <span>OPERATOR CURRICULUM</span>
-          </div>
-          <h1 className="page-title">CLASSROOM</h1>
-          <p className="page-subtitle">Learn it. Apply it. Build with it.</p>
+    <div className="classroom-page-v3">
+      {/* Mobile top bar */}
+      <div className="classroom-mobile-topbar">
+        <div className="classroom-mobile-lesson-name">
+          {activeLesson?.lesson.title ?? 'Select a lesson'}
         </div>
-
-        {/* Category Filter Pills */}
-        <div className="category-filter-pills">
-          <button className={`pill-btn ${activeCategory === 'ALL' ? 'active' : ''}`} onClick={() => setActiveCategory('ALL')}>
-            All Tracks ({courses.length})
-          </button>
-          <button className={`pill-btn ${activeCategory === 'SALES' ? 'active' : ''}`} onClick={() => setActiveCategory('SALES')}>
-            Sales ({salesCourses.length})
-          </button>
-          <button className={`pill-btn ${activeCategory === 'CONTENT' ? 'active' : ''}`} onClick={() => setActiveCategory('CONTENT')}>
-            Content ({contentCourses.length})
-          </button>
-          <button className={`pill-btn ${activeCategory === 'OFFER' ? 'active' : ''}`} onClick={() => setActiveCategory('OFFER')}>
-            Offer ({offerCourses.length})
-          </button>
-        </div>
+        <button
+          className="classroom-mobile-nav-toggle btn btn-outline btn-sm"
+          onClick={() => setMobileNavOpen(o => !o)}
+          aria-label="Toggle lesson navigation"
+        >
+          {mobileNavOpen ? <X size={16} /> : <Menu size={16} />}
+          {mobileNavOpen ? 'Close' : 'Lessons'}
+        </button>
       </div>
 
-      {/* Loading */}
-      {loadingData && (
-        <div className="data-loading-state">
-          <div className="skeleton-line" style={{ width: '60%', margin: '0 auto 8px' }} />
-          <div className="skeleton-line" style={{ width: '40%', margin: '0 auto' }} />
+      {/* Main layout */}
+      <div className="classroom-layout">
+        {/* Sidebar */}
+        <div className={`classroom-sidebar-wrapper ${mobileNavOpen ? 'is-mobile-open' : ''}`}>
+          <ClassroomSidebar
+            selectedLessonId={activeLesson?.lesson.id ?? null}
+            progressMap={progressMap}
+            onSelectLesson={handleSelectLesson}
+          />
         </div>
-      )}
 
-      {/* Error */}
-      {!loadingData && error && (
-        <div className="data-error-state">
-          <strong>Unable to load curriculum</strong>
-          {error}
-        </div>
-      )}
-
-      {/* Empty state — migration not yet run */}
-      {!loadingData && !error && courses.length === 0 && (
-        <div className="data-empty-state">
-          <strong>No modules available yet</strong>
-          Run the Supabase migration to seed curriculum data.
-        </div>
-      )}
-
-      {/* Course Grid */}
-      {!loadingData && !error && courses.length > 0 && (
-        activeCategory === 'ALL' ? (
-          <div className="classroom-category-sections">
-            {[{ label: 'SALES', items: salesCourses }, { label: 'CONTENT', items: contentCourses }, { label: 'OFFER', items: offerCourses }]
-              .filter(sec => sec.items.length > 0)
-              .map(sec => (
-                <div key={sec.label} className="category-section">
-                  <div className="category-section-header">
-                    <h2 className="category-title">{sec.label}</h2>
-                    <span className="category-track-count">{sec.items.length} Modules</span>
-                  </div>
-                  <div className="courses-grid">
-                    {sec.items.map(course => (
-                      <CourseCard key={course.id} course={course} onClick={(c) => setSelectedCourse(c)} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-          </div>
-        ) : (
-          <div className="courses-grid single-category-grid">
-            {filteredCourses.map(course => (
-              <CourseCard key={course.id} course={course} onClick={(c) => setSelectedCourse(c)} />
-            ))}
-          </div>
-        )
-      )}
-
-      {/* Course Preview Modal */}
-      {selectedCourse && (
-        <div className="course-modal-backdrop" onClick={() => setSelectedCourse(null)}>
-          <div className="course-modal-card skool-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-top-thumb">
-              <img src={selectedCourse.thumbnail} alt={selectedCourse.title} />
+        {/* Main content area */}
+        <div className="classroom-main">
+          {progressLoading ? (
+            <div className="classroom-loading">
+              <div className="skeleton-block" style={{ height: '56%', borderRadius: 10 }} />
+              <div className="skeleton-block" style={{ height: 28, width: '60%', marginTop: 16 }} />
+              <div className="skeleton-block" style={{ height: 18, width: '40%', marginTop: 8 }} />
             </div>
-            <div className="modal-body">
-              <div className="modal-cat-tag">{selectedCourse.category} MODULE</div>
-              <h2 className="modal-title">{selectedCourse.title}</h2>
-              <p className="modal-subtitle">{selectedCourse.subtitle}</p>
-
-              <div className="modal-progress-box">
-                <div className="progress-info-row">
-                  <span>Current Completion: {selectedCourse.progress}%</span>
-                  <span>{selectedCourse.completedLessons} / {selectedCourse.totalLessons} Lessons Done</span>
-                </div>
-                <div className="modal-track">
-                  <div className="modal-fill" style={{ width: `${selectedCourse.progress}%` }} />
-                </div>
-              </div>
-
-              <div className="modal-actions">
-                <button className="btn btn-primary btn-lg full-w" onClick={() => setSelectedCourse(null)}>
-                  RESUME MODULE
-                </button>
-                <button className="btn btn-ghost btn-sm" onClick={() => setSelectedCourse(null)}>
-                  Close
-                </button>
-              </div>
+          ) : activeLesson ? (
+            <LessonView
+              lesson={activeLesson.lesson}
+              block={activeLesson.block}
+              mod={activeLesson.mod}
+              progressRow={progressRow}
+              onProgress={handleProgress}
+              onComplete={handleComplete}
+              onReset={handleReset}
+              onNavigate={handleNavigateById}
+            />
+          ) : (
+            <div className="classroom-empty-state">
+              <BookOpen size={48} strokeWidth={1} />
+              <p>Select a lesson from the sidebar to begin.</p>
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
