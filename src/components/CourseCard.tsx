@@ -1,8 +1,19 @@
 import React from 'react';
-import { Course } from '../data/sampleData';
 import { ProgressBar } from './ProgressBar';
 import { Lock } from 'lucide-react';
 import './CourseCard.css';
+
+export interface Course {
+  id: string;
+  category: 'SALES' | 'CONTENT' | 'OFFER';
+  title: string;
+  subtitle: string;
+  thumbnail: string;
+  progress: number;
+  totalLessons: number;
+  completedLessons: number;
+  locked?: boolean;
+}
 
 interface CourseCardProps {
   course: Course;

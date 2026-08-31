@@ -1,121 +1,120 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ProgressBar } from '../components/ProgressBar';
-import { sampleBusinessData } from '../data/sampleData';
-import {
-  Briefcase,
-  CheckCircle2,
-  Award
-} from 'lucide-react';
+import { useAuth } from '../lib/auth/AuthContext';
+import { getAllTimeMetrics, getMetricsHistory } from '../lib/data/businessMetrics';
+import type { BusinessMetric, AllTimeBusinessStats } from '../lib/supabase/types';
+import { Briefcase, CheckCircle2, Award } from 'lucide-react';
 import './BusinessPage.css';
 
 export const BusinessPage: React.FC = () => {
-  const {
-    title,
-    subtitle,
-    clientGoal,
-    nextMilestone,
-    metrics,
-    acquisition,
-    backup,
-    buildLog
-  } = sampleBusinessData;
+  const { user } = useAuth();
+
+  const [allTime, setAllTime]   = useState<AllTimeBusinessStats | null>(null);
+  const [history, setHistory]   = useState<BusinessMetric[]>([]);
+  const [loadingData, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    Promise.all([
+      getAllTimeMetrics(user.id),
+      getMetricsHistory(user.id, 30),
+    ]).then(([stats, hist]) => {
+      setAllTime(stats);
+      setHistory(hist);
+    }).finally(() => setLoading(false));
+  }, [user]);
+
+  const totalClients  = allTime?.totalClientsClosed ?? 0;
+  const totalLeads    = allTime?.totalLeads ?? 0;
+  const totalCalls    = allTime?.totalSalesCalls ?? 0;
+  const totalRevenue  = allTime?.totalRevenue ?? 0;
+  const clientPct     = Math.min(Math.round((totalClients / 100) * 100), 100);
+  const nextMilestone = totalClients < 10 ? 10 : totalClients < 25 ? 25 : totalClients < 50 ? 50 : 100;
+  const nextPct       = Math.min(Math.round((totalClients / nextMilestone) * 100), 100);
+  const conversion    = totalCalls > 0 ? ((totalClients / totalCalls) * 100).toFixed(1) + '%' : '—';
+  const revenueFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(totalRevenue);
 
   return (
     <div className="business-page">
-      {/* Business Hero Banner (100 Clients Progress) */}
+      {/* Business Hero Banner */}
       <div className="business-hero-card skool-card-dark">
         <div className="hero-top-meta">
           <span className="hero-badge">BUSINESS OPERATING PROOF</span>
           <span className="hero-milestone-pill">
             <Award size={13} />
-            <span>Next Milestone: 10 Clients ({nextMilestone.current}/{nextMilestone.target})</span>
+            <span>Next Milestone: {nextMilestone} Clients ({totalClients}/{nextMilestone})</span>
           </span>
         </div>
 
         <div className="hero-headline-group">
-          <h1 className="hero-main-title">{title}</h1>
-          <p className="hero-subtitle">"{subtitle}"</p>
+          <h1 className="hero-main-title">BUILD 100</h1>
+          <p className="hero-subtitle">"The classroom teaches you. The business proves whether you learned."</p>
         </div>
 
-        {/* 100 Clients Progress Bar */}
         <div className="client-progress-block">
           <div className="client-progress-header">
             <div className="client-stat-huge">
-              <span className="current-num">{clientGoal.current}</span>
-              <span className="target-num">/ {clientGoal.target} CLIENTS</span>
+              <span className="current-num">{totalClients}</span>
+              <span className="target-num">/ 100 CLIENTS</span>
             </div>
-            <div className="progress-pct-badge">{clientGoal.percentage}% ACQUIRED</div>
+            <div className="progress-pct-badge">{clientPct}% ACQUIRED</div>
           </div>
-          <ProgressBar
-            value={clientGoal.percentage}
-            color="var(--brand-lime)"
-            trackColor="rgba(255, 255, 255, 0.15)"
-            height={12}
-            showPercent={false}
-          />
+          <ProgressBar value={clientPct} color="var(--brand-lime)" trackColor="rgba(255,255,255,0.15)" height={12} showPercent={false} />
         </div>
       </div>
 
-      {/* Core Business Metrics Grid */}
+      {/* Core Metrics Grid */}
       <div className="metrics-summary-grid">
         <div className="biz-stat-box skool-card">
           <span className="stat-card-label">LEADS</span>
-          <span className="stat-card-val">{metrics.leads}</span>
-          <span className="stat-card-trend">+3 this week</span>
+          <span className="stat-card-val">{loadingData ? '—' : totalLeads}</span>
+          <span className="stat-card-trend">All time</span>
         </div>
-
         <div className="biz-stat-box skool-card">
           <span className="stat-card-label">SALES CALLS</span>
-          <span className="stat-card-val">{metrics.salesCalls}</span>
-          <span className="stat-card-trend">11 booked</span>
+          <span className="stat-card-val">{loadingData ? '—' : totalCalls}</span>
+          <span className="stat-card-trend">All time</span>
         </div>
-
         <div className="biz-stat-box skool-card">
           <span className="stat-card-label">CLIENTS</span>
-          <span className="stat-card-val highlight-client">{metrics.clients}</span>
+          <span className="stat-card-val highlight-client">{loadingData ? '—' : totalClients}</span>
           <span className="stat-card-trend">Active retainers</span>
         </div>
-
         <div className="biz-stat-box skool-card">
           <span className="stat-card-label">REVENUE</span>
-          <span className="stat-card-val">{metrics.revenue}</span>
+          <span className="stat-card-val">{loadingData ? '—' : revenueFormatted}</span>
           <span className="stat-card-trend">Cash collected</span>
         </div>
-
         <div className="biz-stat-box skool-card">
           <span className="stat-card-label">CONVERSION</span>
-          <span className="stat-card-val">{metrics.conversion}</span>
+          <span className="stat-card-val">{loadingData ? '—' : conversion}</span>
           <span className="stat-card-trend">Calls to closed</span>
         </div>
       </div>
 
-      {/* Two Column Section: Acquisition & Next Milestone | Build Log Journal */}
+      {/* Two Column Section */}
       <div className="business-content-grid">
-        {/* Left Column: Acquisition Channels & Next Milestone & Backup */}
+        {/* Left Column */}
         <div className="biz-left-col">
-          {/* Next Milestone Card */}
+          {/* Next Milestone */}
           <div className="milestone-card skool-card">
             <div className="milestone-header">
               <span className="section-label">NEXT MILESTONE</span>
               <span className="badge badge-brand">IN PROGRESS</span>
             </div>
             <div className="milestone-body">
-              <h3 className="milestone-title">{nextMilestone.label}</h3>
+              <h3 className="milestone-title">{nextMilestone} CLIENTS</h3>
               <div className="milestone-progress-row">
-                <span className="milestone-count">{nextMilestone.current} / {nextMilestone.target} Clients</span>
-                <span className="milestone-pct">{nextMilestone.progress}%</span>
+                <span className="milestone-count">{totalClients} / {nextMilestone} Clients</span>
+                <span className="milestone-pct">{nextPct}%</span>
               </div>
-              <ProgressBar
-                value={nextMilestone.progress}
-                color="var(--brand-green-dark)"
-                height={8}
-                showPercent={false}
-              />
-              <p className="milestone-note">4 more closes required to reach 10-Client proof tier.</p>
+              <ProgressBar value={nextPct} color="var(--brand-green-dark)" height={8} showPercent={false} />
+              <p className="milestone-note">{nextMilestone - totalClients} more closes required to reach {nextMilestone}-Client proof tier.</p>
             </div>
           </div>
 
-          {/* Acquisition Channels Card */}
+          {/* Acquisition Engine */}
           <div className="acquisition-card skool-card">
             <div className="acquisition-header">
               <span className="section-label">ACQUISITION ENGINE</span>
@@ -124,54 +123,51 @@ export const BusinessPage: React.FC = () => {
                 <span>INSTAGRAM</span>
               </span>
             </div>
-
             <div className="channel-items-stack">
               <div className="channel-item">
                 <div className="channel-label-group">
                   <span className="channel-title">Repost Accounts</span>
                   <span className="channel-desc">Distribution clipping army</span>
                 </div>
-                <span className="channel-status-badge">{acquisition.repostAccounts}</span>
+                <span className="channel-status-badge">Active</span>
               </div>
-
               <div className="channel-item">
                 <div className="channel-label-group">
                   <span className="channel-title">Original Content</span>
-                  <span className="channel-desc">Daily reel & hook distribution</span>
+                  <span className="channel-desc">Daily reel &amp; hook distribution</span>
                 </div>
                 <span className="channel-status-badge success">
                   <CheckCircle2 size={13} />
-                  <span>{acquisition.originalContentStatus}</span>
+                  <span>Posted</span>
                 </span>
               </div>
-
               <div className="channel-item">
                 <div className="channel-label-group">
                   <span className="channel-title">Personal Brand</span>
-                  <span className="channel-desc">Founder authority stories & proof</span>
+                  <span className="channel-desc">Founder authority stories &amp; proof</span>
                 </div>
                 <span className="channel-status-badge success">
                   <CheckCircle2 size={13} />
-                  <span>{acquisition.personalBrandStatus}</span>
+                  <span>Active</span>
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Backup Job Applications Card */}
+          {/* Backup Card */}
           <div className="backup-card skool-card">
             <div className="backup-header">
               <div className="backup-icon-title">
                 <Briefcase size={14} className="backup-icon" />
                 <span className="backup-label">JOB APPLICATIONS (BACKUP)</span>
               </div>
-              <span className="backup-value">Today: {backup.jobApplicationsToday}</span>
+              <span className="backup-value">Safety net only</span>
             </div>
-            <p className="backup-note">{backup.note}</p>
+            <p className="backup-note">Backup pipeline safety tracking only. Primary focus: closing clients.</p>
           </div>
         </div>
 
-        {/* Right Column: Build Log Journal */}
+        {/* Right Column: Build Log */}
         <div className="biz-right-col">
           <div className="build-log-card skool-card">
             <div className="build-log-header">
@@ -179,58 +175,51 @@ export const BusinessPage: React.FC = () => {
                 <span className="section-label">EXECUTION JOURNAL</span>
                 <h3 className="build-log-title">BUILD LOG</h3>
               </div>
-              <span className="log-badge">August 2026</span>
+              <span className="log-badge">Last 30 Days</span>
             </div>
 
-            {/* Monthly Stats Summary Bar */}
-            <div className="monthly-stats-summary">
-              <div className="monthly-stat-item">
-                <span className="monthly-stat-val">{buildLog.summary.hoursThisMonth}h</span>
-                <span className="monthly-stat-lbl">Hours this month</span>
-              </div>
-              <div className="monthly-stat-item">
-                <span className="monthly-stat-val">{buildLog.summary.workingDays}</span>
-                <span className="monthly-stat-lbl">Working days</span>
-              </div>
-              <div className="monthly-stat-item">
-                <span className="monthly-stat-val">{buildLog.summary.longestDay}h</span>
-                <span className="monthly-stat-lbl">Longest day</span>
-              </div>
-              <div className="monthly-stat-item">
-                <span className="monthly-stat-val">{buildLog.summary.weekendDaysWorked}</span>
-                <span className="monthly-stat-lbl">Weekend days</span>
-              </div>
-            </div>
+            {loadingData && (
+              <div className="data-loading-state">Loading build log…</div>
+            )}
 
-            {/* Daily Log Entries */}
-            <div className="build-entries-list">
-              {buildLog.entries.map((entry, index) => (
-                <div
-                  key={index}
-                  className={`build-entry-row ${entry.isWorked ? 'worked-day' : 'rest-day'}`}
-                >
-                  <div className="entry-left">
-                    <span className="entry-day">{entry.day}</span>
-                    {entry.date && <span className="entry-date">{entry.date}</span>}
-                  </div>
-                  
-                  <div className="entry-center">
-                    <span className={`entry-status ${entry.isWorked ? 'status-worked' : 'status-rest'}`}>
-                      {entry.status}
-                    </span>
-                    {entry.notes && <span className="entry-notes">{entry.notes}</span>}
-                  </div>
+            {!loadingData && history.length === 0 && (
+              <div className="data-empty-state">
+                <strong>No entries yet</strong>
+                Log your daily business activity to build your execution journal.
+              </div>
+            )}
 
-                  <div className="entry-right">
-                    {entry.hours > 0 ? (
-                      <span className="entry-hour-badge">{entry.hours} hrs</span>
-                    ) : (
-                      <span className="entry-off-badge">OFF</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            {!loadingData && history.length > 0 && (
+              <div className="build-entries-list">
+                {history.map((entry, index) => {
+                  const dateObj = new Date(entry.date + 'T00:00:00');
+                  const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                  const dateLabel = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  const isWorked = entry.hours_worked > 0;
+                  return (
+                    <div key={index} className={`build-entry-row ${isWorked ? 'worked-day' : 'rest-day'}`}>
+                      <div className="entry-left">
+                        <span className="entry-day">{dayName}</span>
+                        <span className="entry-date">{dateLabel}</span>
+                      </div>
+                      <div className="entry-center">
+                        <span className={`entry-status ${isWorked ? 'status-worked' : 'status-rest'}`}>
+                          {isWorked ? `Worked ${entry.hours_worked}h` : 'Did not work'}
+                        </span>
+                        {entry.notes && <span className="entry-notes">{entry.notes}</span>}
+                      </div>
+                      <div className="entry-right">
+                        {isWorked ? (
+                          <span className="entry-hour-badge">{entry.hours_worked} hrs</span>
+                        ) : (
+                          <span className="entry-off-badge">OFF</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
