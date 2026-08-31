@@ -8,27 +8,37 @@ import { CalendarPage } from './pages/CalendarPage';
 import { BusinessPage } from './pages/BusinessPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { AboutPage } from './pages/AboutPage';
-import { LoginPage } from './pages/LoginPage';
 import './styles/global.css';
 
-// Inner app shell — only rendered when authenticated
+// Inner app shell — auto-signs-in on load, no login page shown
 const AppShell: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { loading, authError } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
 
+  // Signing in silently — show BUILD100 loading screen
   if (loading) {
     return (
       <div className="app-loading-screen">
         <div className="app-loading-inner">
           <img src="/assets/build100-icon.png" alt="BUILD100" className="app-loading-logo" />
-          <p className="app-loading-text">Loading…</p>
+          <p className="app-loading-text">Loading BUILD100…</p>
         </div>
       </div>
     );
   }
 
-  if (!user) {
-    return <LoginPage />;
+  // Safety net: only shown if env vars are missing/wrong (should never happen in prod)
+  if (authError) {
+    return (
+      <div className="app-loading-screen">
+        <div className="app-loading-inner">
+          <img src="/assets/build100-icon.png" alt="BUILD100" className="app-loading-logo" />
+          <p className="app-loading-text" style={{ color: '#dc2626', maxWidth: 320, textAlign: 'center' }}>
+            {authError}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const renderActivePage = () => {

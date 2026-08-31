@@ -4,28 +4,33 @@ import { supabase } from '../supabase/client';
 import type { Profile } from '../supabase/types';
 import { getProfile, upsertProfile } from '../data/profiles';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const meta = import.meta as any;
+const AUTO_EMAIL: string    = meta.env.VITE_AUTO_EMAIL    ?? '';
+const AUTO_PASSWORD: string = meta.env.VITE_AUTO_PASSWORD ?? '';
+
 interface AuthContextValue {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<string | null>;
+  authError: string | null;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]           = useState<User | null>(null);
+  const [profile, setProfile]     = useState<Profile | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const loadProfile = useCallback(async (authUser: User) => {
     let prof = await getProfile(authUser.id);
     if (!prof) {
-      // Auto-create profile on first login
       prof = await upsertProfile({
         id: authUser.id,
-        full_name: authUser.user_metadata?.full_name ?? authUser.email ?? 'Jason',
+        full_name: authUser.user_metadata?.full_name ?? 'Jason Harris',
         avatar_url: authUser.user_metadata?.avatar_url ?? null,
         level: 1,
         xp: 0,
@@ -35,19 +40,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(prof);
   }, []);
 
+  const doAutoSignIn = useCallback(async () => {
+    if (!AUTO_EMAIL || !AUTO_PASSWORD) {
+      setAuthError('Auto-login credentials not configured. Set VITE_AUTO_EMAIL and VITE_AUTO_PASSWORD.');
+      setLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: AUTO_EMAIL,
+      password: AUTO_PASSWORD,
+    });
+
+    if (error || !data.user) {
+      setAuthError('Auto-login failed. Check credentials in Vercel environment variables.');
+      setLoading(false);
+      return;
+    }
+
+    setUser(data.user);
+    await loadProfile(data.user);
+    setLoading(false);
+  }, [loadProfile]);
+
   useEffect(() => {
-    // Get initial session
+    // Check if already have a valid session first (e.g. tab refresh)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const authUser = session?.user ?? null;
-      setUser(authUser);
-      if (authUser) {
-        loadProfile(authUser).finally(() => setLoading(false));
+      if (session?.user) {
+        setUser(session.user);
+        loadProfile(session.user).finally(() => setLoading(false));
       } else {
-        setLoading(false);
+        // No existing session — auto-sign-in silently
+        doAutoSignIn();
       }
     });
 
-    // Listen for auth state changes
+    // Keep session in sync
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const authUser = session?.user ?? null;
       setUser(authUser);
@@ -59,12 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [loadProfile]);
-
-  const signIn = useCallback(async (email: string, password: string): Promise<string | null> => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return error ? error.message : null;
-  }, []);
+  }, [doAutoSignIn, loadProfile]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
@@ -73,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, authError, signOut }}>
       {children}
     </AuthContext.Provider>
   );
