@@ -1,0 +1,95 @@
+.exec-learning-card {
+  padding: var(--space-5);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.contrast-subtext {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.contrast-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.contrast-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.contrast-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.item-title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.item-icon.zap {
+  color: var(--accent-emerald);
+}
+
+.item-icon.target {
+  color: var(--brand-lime-text);
+}
+
+.item-icon.award {
+  color: var(--brand-green-dark);
+}
+
+.item-name {
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.item-val {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.item-val.alert {
+  color: #b45309;
+}
+
+.item-val.bold {
+  color: var(--brand-green-dark);
+}
+
+.contrast-truth-footer {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.truth-statement {
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-align: center;
+}

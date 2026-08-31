@@ -1,0 +1,86 @@
+.today-business-card {
+  padding: var(--space-5);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.today-business-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.live-date-indicator {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.business-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.biz-metric-item {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.biz-metric-item.full-span {
+  grid-column: span 2;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--brand-lime-soft);
+  border-color: rgba(197, 239, 38, 0.4);
+}
+
+.metric-icon-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metric-icon {
+  color: var(--text-secondary);
+}
+
+.biz-metric-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.biz-metric-value {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.biz-metric-value .val-sub {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.highlight-zero {
+  color: var(--text-secondary);
+}
+
+.highlight-worked {
+  color: var(--brand-green-dark);
+  font-size: var(--font-size-lg);
+}

@@ -1,0 +1,350 @@
+.leaderboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Operator Hero Profile Card */
+.operator-profile-card {
+  padding: var(--space-8);
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--space-8);
+  align-items: center;
+  background: #ffffff;
+}
+
+.operator-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+}
+
+.avatar-huge-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: var(--radius-full);
+  border: 4px solid #ffffff;
+  box-shadow: var(--shadow-md);
+}
+
+.avatar-huge-img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+.level-huge-badge {
+  position: absolute;
+  bottom: 0;
+  right: 4px;
+  width: 38px;
+  height: 38px;
+  background: #3b82f6;
+  color: #ffffff;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-md);
+  font-weight: 900;
+  border: 3px solid #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.operator-meta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.operator-name {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.operator-level-rank {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.level-up-progress-wrapper {
+  margin-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.level-up-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.points-needed {
+  font-weight: 700;
+  color: var(--brand-green);
+}
+
+/* Levels Roadmap Grid */
+.levels-roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+}
+
+.level-grid-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  transition: all var(--transition-fast);
+}
+
+.level-grid-item.current-level {
+  border-color: var(--brand-lime);
+  background: var(--brand-lime-soft);
+  box-shadow: var(--shadow-xs);
+}
+
+.level-number-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.icon-current {
+  background: var(--brand-green-dark);
+  color: var(--brand-lime);
+}
+
+.icon-done {
+  background: #e2e8f0;
+  color: var(--text-secondary);
+}
+
+.icon-locked {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.level-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.lvl-item-title {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.lvl-item-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* XP Breakdown */
+.xp-breakdown-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.section-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.section-heading {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.total-xp-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--brand-green-dark);
+  color: var(--brand-lime);
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.04em;
+}
+
+.xp-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.xp-card {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.xp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.xp-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.xp-icon-wrap.execution {
+  background: var(--accent-emerald-soft);
+  color: var(--accent-emerald);
+}
+
+.xp-icon-wrap.application {
+  background: var(--brand-lime-soft);
+  color: var(--brand-lime-text);
+}
+
+.xp-icon-wrap.business {
+  background: var(--bg-subtle);
+  color: var(--brand-green-dark);
+}
+
+.xp-tag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.xp-val {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.xp-unit {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.xp-desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.45;
+  min-height: 36px;
+}
+
+/* Personal Records */
+.personal-records-section {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.records-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.records-title {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.records-sub {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.records-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+.record-item-card {
+  padding: var(--space-4);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rec-metric-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.rec-value {
+  font-size: var(--font-size-md);
+  font-weight: 800;
+  color: var(--brand-green-dark);
+}
+
+.rec-achieved {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+  .operator-profile-card {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+  .levels-roadmap-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .xp-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .records-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

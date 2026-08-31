@@ -1,0 +1,129 @@
+.session-card {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+}
+
+.session-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-label {
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.session-live-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-emerald-soft);
+  color: var(--accent-emerald);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.live-pulse {
+  width: 7px;
+  height: 7px;
+  background: var(--accent-emerald);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+.session-main-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.session-title {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.session-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.session-time-block {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+}
+
+.time-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+}
+
+.time-icon {
+  color: var(--text-secondary);
+}
+
+.time-divider {
+  color: var(--text-muted);
+}
+
+.countdown-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+}
+
+.countdown-label {
+  color: var(--text-secondary);
+}
+
+.countdown-time {
+  font-weight: 800;
+  color: var(--brand-green-dark);
+  background: var(--brand-lime);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  letter-spacing: -0.01em;
+}
+
+.session-card-actions {
+  display: flex;
+  align-items: center;
+}
+
+.session-start-btn {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  justify-content: center;
+}
+
+.session-start-btn.active-call {
+  background: var(--brand-green-dark);
+  color: #ffffff;
+}

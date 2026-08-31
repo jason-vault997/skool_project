@@ -1,0 +1,366 @@
+.about-page {
+  gap: var(--space-6);
+}
+
+.about-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.about-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* About Hero Card */
+.about-hero-card {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.about-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.about-main-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.about-rating-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-subtle);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.stars-row {
+  display: flex;
+  gap: 2px;
+}
+
+.rating-text {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.about-hero-image-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--brand-green-dark);
+}
+
+.about-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.meta-icon {
+  color: var(--brand-green);
+}
+
+.about-statement-banner {
+  background: var(--brand-lime-soft);
+  border: 1px solid rgba(197, 239, 38, 0.4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+}
+
+.statement-text {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--brand-green-dark);
+}
+
+.about-body-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.philosophy-intro {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* 3 Pillars Grid */
+.about-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.pillar-card {
+  padding: var(--space-4);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pillar-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pillar-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.pillar-indicator.sales {
+  background: #f59e0b;
+}
+
+.pillar-indicator.content {
+  background: #3b82f6;
+}
+
+.pillar-indicator.offer {
+  background: #ef4444;
+}
+
+.pillar-cat {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+}
+
+.pillar-headline {
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.pillar-desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.45;
+  flex: 1;
+}
+
+.pillar-coach {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-green);
+  margin-top: 4px;
+}
+
+/* Real Objective Callout */
+.real-objective-card {
+  background: var(--brand-green-dark);
+  color: #ffffff;
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: 1px solid rgba(197, 239, 38, 0.2);
+}
+
+.objective-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--brand-lime);
+  text-transform: uppercase;
+}
+
+.objective-body {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  line-height: 1.5;
+  color: #ffffff;
+  white-space: pre-line;
+}
+
+/* Sidebar Styling */
+.about-sidebar-card {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-banner-img-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 8;
+  background: var(--brand-green-dark);
+  overflow: hidden;
+}
+
+.sidebar-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sidebar-card-body {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sidebar-brand-name {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.sidebar-brand-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: -8px;
+  font-weight: 600;
+}
+
+.sidebar-bio {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.sidebar-quick-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border-light);
+  text-align: center;
+}
+
+.quick-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qs-val {
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.qs-lbl {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.schedule-sidebar-card {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cadence-title {
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.cadence-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cadence-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-light);
+  gap: var(--space-2);
+}
+
+.cadence-row:last-child {
+  border-bottom: none;
+}
+
+.cadence-day-time {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 90px;
+}
+
+.cadence-day {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cadence-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.cadence-track {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+  flex: 1;
+}
+
+.cadence-track-name {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cadence-coach {
+  font-size: 11px;
+  color: var(--brand-green);
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .about-pillars-grid {
+    grid-template-columns: 1fr;
+  }
+}
