@@ -4,10 +4,8 @@ import { supabase } from '../supabase/client';
 import type { Profile } from '../supabase/types';
 import { getProfile, upsertProfile } from '../data/profiles';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const meta = import.meta as any;
-const AUTO_EMAIL: string    = meta.env.VITE_AUTO_EMAIL    ?? '';
-const AUTO_PASSWORD: string = meta.env.VITE_AUTO_PASSWORD ?? '';
+const AUTO_EMAIL    = import.meta.env.VITE_AUTO_EMAIL;
+const AUTO_PASSWORD = import.meta.env.VITE_AUTO_PASSWORD;
 
 interface AuthContextValue {
   user: User | null;
@@ -42,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const doAutoSignIn = useCallback(async () => {
     if (!AUTO_EMAIL || !AUTO_PASSWORD) {
-      setAuthError('Auto-login credentials not configured. Set VITE_AUTO_EMAIL and VITE_AUTO_PASSWORD.');
+      setAuthError('Auto-login credentials not configured. Add VITE_AUTO_EMAIL and VITE_AUTO_PASSWORD in Vercel environment variables.');
       setLoading(false);
       return;
     }
@@ -53,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (error || !data.user) {
-      setAuthError('Auto-login failed. Check credentials in Vercel environment variables.');
+      setAuthError('Auto-login failed: ' + (error?.message ?? 'Unknown error'));
       setLoading(false);
       return;
     }
@@ -64,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadProfile]);
 
   useEffect(() => {
-    // Check if already have a valid session first (e.g. tab refresh)
+    // Check if already have a valid session (e.g. tab refresh within same session)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
@@ -75,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Keep session in sync
+    // Keep session in sync across tabs
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const authUser = session?.user ?? null;
       setUser(authUser);
