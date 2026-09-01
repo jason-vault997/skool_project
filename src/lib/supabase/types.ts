@@ -222,6 +222,52 @@ export interface Database {
   };
 }
 
+// ---- Phase 4: Application Engine ----
+
+export type ApplicationStatus =
+  | 'Not Started'
+  | 'In Progress'
+  | 'Completed'
+  | 'Failed'
+  | 'Skipped';
+
+export const APPLICATION_STATUSES: ApplicationStatus[] = [
+  'Not Started',
+  'In Progress',
+  'Completed',
+  'Failed',
+  'Skipped',
+];
+
+export interface ApplicationRecord {
+  id: string;
+  user_id: string;
+  lesson_id: string;
+  notes: string | null;
+  key_concepts: string | null;
+  importance: string | null;
+  mission: string | null;
+  commitment: string | null;
+  experiment: string | null;
+  status: ApplicationStatus;
+  outcome: string | null;
+  reflection: string | null;
+  review_date: string | null;   // 'YYYY-MM-DD'
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
+export type ApplicationRecordInsert = Omit<ApplicationRecord, 'id' | 'created_at' | 'updated_at' | 'completed_at'> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+  completed_at?: string | null;
+};
+
+/** UI-derived status of a lesson's application — used for sidebar indicators */
+export type AppIndicatorStatus = 'none' | 'started' | 'completed' | 'failed';
+
 // ---- UI-only types ----
 
 export interface LevelInfo {

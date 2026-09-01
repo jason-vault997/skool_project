@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Check, Circle, PlayCircle, Menu, X, RotateCcw } from 'lucide-react';
+import {
+  ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
+  Check, Circle, PlayCircle, Menu, X, RotateCcw,
+} from 'lucide-react';
 import { useAuth } from '../lib/auth/AuthContext';
 import { YouTubePlayer } from '../components/classroom/YouTubePlayer';
+import { ApplicationEngine } from '../components/classroom/ApplicationEngine';
 import {
   CLASSROOM_DATA,
   ClassroomBlock,
@@ -18,23 +22,32 @@ import {
   markLessonComplete,
   resetLessonProgress,
 } from '../lib/data/classroomProgress';
+import {
+  ApplicationRecord,
+  AppIndicatorStatus,
+} from '../lib/supabase/types';
+import {
+  getAllApplicationRecords,
+  buildAppIndicatorMap,
+  calcBlockApplicationStats,
+} from '../lib/data/applicationRecords';
 import './ClassroomPage.css';
 
 // ── Thumbnail map ──────────────────────────────────────────────
 const BLOCK_THUMBS: Record<string, string> = {
-  'sales':              '/thumbs/sales.jpg',
-  'content-creation':   '/thumbs/content.jpg',
-  'offer-creation':     '/thumbs/offer.jpg',
-  'unedited-recordings':'/thumbs/unedited.jpg',
-  'cold-calling':       '/thumbs/cold-calling.jpg',
+  'sales':               '/thumbs/sales.jpg',
+  'content-creation':    '/thumbs/content.jpg',
+  'offer-creation':      '/thumbs/offer.jpg',
+  'unedited-recordings': '/thumbs/unedited.jpg',
+  'cold-calling':        '/thumbs/cold-calling.jpg',
 };
 
 const BLOCK_DESCRIPTIONS: Record<string, string> = {
-  'sales':              'Bite-size videos from our Sales Classes',
-  'content-creation':   'Bite-size videos from our Content Creation Classes',
-  'offer-creation':     'Bite-size videos from our Offer Creation Classes',
-  'unedited-recordings':'Unedited recordings of all the previous sessions',
-  'cold-calling':       'Master the art of cold calling from first principles',
+  'sales':               'Bite-size videos from our Sales Classes',
+  'content-creation':    'Bite-size videos from our Content Creation Classes',
+  'offer-creation':      'Bite-size videos from our Offer Creation Classes',
+  'unedited-recordings': 'Unedited recordings of all the previous sessions',
+  'cold-calling':        'Master the art of cold calling from first principles',
 };
 
 // ── Types ──────────────────────────────────────────────────────
@@ -58,12 +71,17 @@ function resolveLessonContext(lessonId: string): ActiveLesson | null {
 // CLASSROOM LANDING PAGE
 // ═══════════════════════════════════════════════════════════════
 interface LandingPageProps {
-  progressMap: Map<string, ClassroomProgressRow>;
-  onSelectBlock: (block: ClassroomBlock) => void;
+  progressMap:    Map<string, ClassroomProgressRow>;
+  appRecordsMap:  Map<string, ApplicationRecord>;
+  onSelectBlock:  (block: ClassroomBlock) => void;
 }
 
-const ClassroomLanding: React.FC<LandingPageProps> = ({ progressMap, onSelectBlock }) => {
-  const pctMap = new Map(Array.from(progressMap.entries()).map(([k, v]) => [k, v.progress_pct]));
+const ClassroomLanding: React.FC<LandingPageProps> = ({
+  progressMap, appRecordsMap, onSelectBlock,
+}) => {
+  const pctMap = new Map(
+    Array.from(progressMap.entries()).map(([k, v]) => [k, v.progress_pct])
+  );
 
   return (
     <div className="classroom-landing">
@@ -72,8 +90,10 @@ const ClassroomLanding: React.FC<LandingPageProps> = ({ progressMap, onSelectBlo
       </div>
       <div className="classroom-cards-grid">
         {CLASSROOM_DATA.map(block => {
-          const progress = calcBlockProgress(block, pctMap);
-          const totalLessons = block.modules.reduce((s, m) => s + m.lessons.length, 0);
+          const progress      = calcBlockProgress(block, pctMap);
+          const totalLessons  = block.modules.reduce((s, m) => s + m.lessons.length, 0);
+          const lessonIds     = block.modules.flatMap(m => m.lessons.map(l => l.id));
+          const appStats      = calcBlockApplicationStats(lessonIds, appRecordsMap);
 
           return (
             <button
@@ -98,7 +118,7 @@ const ClassroomLanding: React.FC<LandingPageProps> = ({ progressMap, onSelectBlo
                   <p className="classroom-card-desc">{BLOCK_DESCRIPTIONS[block.id]}</p>
                 </div>
 
-                {/* Progress bar row */}
+                {/* Watch progress row */}
                 <div className="classroom-card-progress-row">
                   {progress > 0 ? (
                     <span className="classroom-card-pct-badge">{progress}%</span>
@@ -113,8 +133,22 @@ const ClassroomLanding: React.FC<LandingPageProps> = ({ progressMap, onSelectBlo
                   </div>
                 </div>
 
-                <div className="classroom-card-meta">
-                  {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
+                {/* Meta row: lesson count + application count */}
+                <div className="classroom-card-meta-row">
+                  <span className="classroom-card-meta">
+                    {totalLessons} lessons
+                  </span>
+                  {appStats.completed > 0 && (
+                    <span className="classroom-card-app-badge">
+                      <Check size={10} strokeWidth={3} />
+                      {appStats.completed} applied
+                    </span>
+                  )}
+                  {appStats.started > 0 && appStats.completed === 0 && (
+                    <span className="classroom-card-app-badge app-badge-started">
+                      {appStats.started} in progress
+                    </span>
+                  )}
                 </div>
               </div>
             </button>
@@ -132,20 +166,19 @@ interface SidebarProps {
   block:            ClassroomBlock;
   selectedLessonId: string | null;
   progressMap:      Map<string, ClassroomProgressRow>;
+  appIndicatorMap:  Map<string, AppIndicatorStatus>;
   onSelectLesson:   (lesson: ClassroomLesson, mod: ClassroomModule) => void;
 }
 
 const LearningSidebar: React.FC<SidebarProps> = ({
-  block,
-  selectedLessonId,
-  progressMap,
-  onSelectLesson,
+  block, selectedLessonId, progressMap, appIndicatorMap, onSelectLesson,
 }) => {
-  const pctMap = new Map(Array.from(progressMap.entries()).map(([k, v]) => [k, v.progress_pct]));
+  const pctMap = new Map(
+    Array.from(progressMap.entries()).map(([k, v]) => [k, v.progress_pct])
+  );
 
-  // All modules expanded by default — collapse individually
-  const [expandedMods, setExpandedMods] = useState<Set<string>>(() =>
-    new Set(block.modules.map(m => m.id))
+  const [expandedMods, setExpandedMods] = useState<Set<string>>(
+    () => new Set(block.modules.map(m => m.id))
   );
 
   const toggleMod = (modId: string) => {
@@ -176,7 +209,7 @@ const LearningSidebar: React.FC<SidebarProps> = ({
             <div className="learning-sidebar-prog-fill" style={{ width: `${blockProgress}%` }} />
           </div>
         </div>
-        <div className="learning-sidebar-count">{doneLessons} / {totalLessons} lessons</div>
+        <div className="learning-sidebar-count">{doneLessons} / {totalLessons} lessons watched</div>
       </div>
 
       {/* Module list */}
@@ -184,11 +217,12 @@ const LearningSidebar: React.FC<SidebarProps> = ({
         {block.modules.map(mod => {
           const modExpanded = expandedMods.has(mod.id);
           const modProgress = calcModuleProgress(mod, pctMap);
-          const modDone     = mod.lessons.filter(l => (progressMap.get(l.id)?.completed ?? false) || (progressMap.get(l.id)?.progress_pct ?? 0) >= 100).length;
+          const modDone     = mod.lessons.filter(
+            l => (progressMap.get(l.id)?.completed ?? false) || (progressMap.get(l.id)?.progress_pct ?? 0) >= 100
+          ).length;
 
           return (
             <div key={mod.id} className="sidebar-mod-group">
-              {/* Module header */}
               <button
                 className={`sidebar-mod-header ${modExpanded ? 'is-expanded' : ''}`}
                 onClick={() => toggleMod(mod.id)}
@@ -202,14 +236,14 @@ const LearningSidebar: React.FC<SidebarProps> = ({
                 </div>
               </button>
 
-              {/* Lessons */}
               {modExpanded && (
                 <ul className="sidebar-lessons-list">
                   {mod.lessons.map(lesson => {
-                    const row       = progressMap.get(lesson.id);
-                    const isActive  = selectedLessonId === lesson.id;
-                    const done      = row?.completed === true || (row?.progress_pct ?? 0) >= 100;
-                    const inProg    = !done && (row?.progress_pct ?? 0) > 0;
+                    const row        = progressMap.get(lesson.id);
+                    const isActive   = selectedLessonId === lesson.id;
+                    const done       = row?.completed === true || (row?.progress_pct ?? 0) >= 100;
+                    const inProg     = !done && (row?.progress_pct ?? 0) > 0;
+                    const appStatus  = appIndicatorMap.get(lesson.id) ?? 'none';
 
                     return (
                       <li key={lesson.id}>
@@ -218,6 +252,7 @@ const LearningSidebar: React.FC<SidebarProps> = ({
                           onClick={() => onSelectLesson(lesson, mod)}
                           title={lesson.title}
                         >
+                          {/* Watch status icon */}
                           <span className={`sidebar-lesson-icon ${done ? 'icon-done' : inProg ? 'icon-progress' : 'icon-empty'}`}>
                             {done ? (
                               <Check size={12} strokeWidth={2.5} />
@@ -227,7 +262,16 @@ const LearningSidebar: React.FC<SidebarProps> = ({
                               <Circle size={12} strokeWidth={1.5} />
                             )}
                           </span>
+
                           <span className="sidebar-lesson-label">{lesson.title}</span>
+
+                          {/* Application indicator dot */}
+                          {appStatus !== 'none' && (
+                            <span
+                              className={`sidebar-app-dot dot-${appStatus}`}
+                              title={`Application: ${appStatus}`}
+                            />
+                          )}
                         </button>
                       </li>
                     );
@@ -243,19 +287,21 @@ const LearningSidebar: React.FC<SidebarProps> = ({
 };
 
 // ═══════════════════════════════════════════════════════════════
-// LESSON VIEW (right panel)
+// LESSON VIEW (right panel) — with ApplicationEngine embedded
 // ═══════════════════════════════════════════════════════════════
 interface LessonPanelProps {
-  active:      ActiveLesson;
-  progressRow: ClassroomProgressRow | undefined;
-  onProgress:  (pct: number, sec: number) => void;
-  onComplete:  () => void;
-  onReset:     () => void;
-  onNavigate:  (id: string) => void;
+  active:          ActiveLesson;
+  progressRow:     ClassroomProgressRow | undefined;
+  userId:          string;
+  onProgress:      (pct: number, sec: number) => void;
+  onComplete:      () => void;
+  onReset:         () => void;
+  onNavigate:      (id: string) => void;
+  onAppSaved:      (record: ApplicationRecord) => void;
 }
 
 const LessonPanel: React.FC<LessonPanelProps> = ({
-  active, progressRow, onProgress, onComplete, onReset, onNavigate,
+  active, progressRow, userId, onProgress, onComplete, onReset, onNavigate, onAppSaved,
 }) => {
   const { lesson, block, mod } = active;
   const nextLesson  = useMemo(() => findNextLesson(lesson.id), [lesson.id]);
@@ -265,7 +311,7 @@ const LessonPanel: React.FC<LessonPanelProps> = ({
 
   return (
     <div className="lesson-panel">
-      {/* Lesson title row */}
+      {/* Breadcrumb + Title */}
       <div className="lesson-panel-header">
         <div className="lesson-panel-breadcrumb">
           <span className="lp-block-name">{block.title}</span>
@@ -292,7 +338,7 @@ const LessonPanel: React.FC<LessonPanelProps> = ({
         onComplete={onComplete}
       />
 
-      {/* Progress bar (in-progress only) */}
+      {/* In-progress bar */}
       {progressPct > 0 && !isCompleted && (
         <div className="lesson-panel-progress-row">
           <div className="lesson-panel-prog-bar">
@@ -302,7 +348,7 @@ const LessonPanel: React.FC<LessonPanelProps> = ({
         </div>
       )}
 
-      {/* Actions */}
+      {/* Watch actions */}
       <div className="lesson-panel-actions">
         {isCompleted ? (
           <button className="lp-btn lp-btn-ghost" onClick={onReset}>
@@ -326,6 +372,14 @@ const LessonPanel: React.FC<LessonPanelProps> = ({
           </button>
         )}
       </div>
+
+      {/* ── APPLICATION ENGINE ── (key=lesson.id ensures fresh load per lesson) */}
+      <ApplicationEngine
+        key={lesson.id}
+        lessonId={lesson.id}
+        userId={userId}
+        onSaved={onAppSaved}
+      />
     </div>
   );
 };
@@ -334,16 +388,20 @@ const LessonPanel: React.FC<LessonPanelProps> = ({
 // LEARNING INTERFACE (full block view: sidebar + lesson panel)
 // ═══════════════════════════════════════════════════════════════
 interface LearningInterfaceProps {
-  block:       ClassroomBlock;
-  progressMap: Map<string, ClassroomProgressRow>;
-  onBack:      () => void;
-  onProgress:  (lessonId: string, pct: number, sec: number) => Promise<void>;
-  onComplete:  (lessonId: string) => Promise<void>;
-  onReset:     (lessonId: string) => Promise<void>;
+  block:           ClassroomBlock;
+  progressMap:     Map<string, ClassroomProgressRow>;
+  appRecordsMap:   Map<string, ApplicationRecord>;
+  userId:          string;
+  onBack:          () => void;
+  onProgress:      (lessonId: string, pct: number, sec: number) => Promise<void>;
+  onComplete:      (lessonId: string) => Promise<void>;
+  onReset:         (lessonId: string) => Promise<void>;
+  onAppRecordSaved:(record: ApplicationRecord) => void;
 }
 
 const LearningInterface: React.FC<LearningInterfaceProps> = ({
-  block, progressMap, onBack, onProgress, onComplete, onReset,
+  block, progressMap, appRecordsMap, userId,
+  onBack, onProgress, onComplete, onReset, onAppRecordSaved,
 }) => {
   const [activeLesson, setActiveLesson] = useState<ActiveLesson | null>(() => {
     const firstMod    = block.modules[0];
@@ -351,6 +409,11 @@ const LearningInterface: React.FC<LearningInterfaceProps> = ({
     return firstLesson ? { lesson: firstLesson, block, mod: firstMod } : null;
   });
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const appIndicatorMap = useMemo(
+    () => buildAppIndicatorMap(appRecordsMap),
+    [appRecordsMap]
+  );
 
   const handleSelectLesson = useCallback((lesson: ClassroomLesson, mod: ClassroomModule) => {
     setActiveLesson({ lesson, block, mod });
@@ -391,28 +454,29 @@ const LearningInterface: React.FC<LearningInterfaceProps> = ({
         </button>
       </div>
 
-      {/* Main layout: sidebar + content */}
+      {/* Main layout */}
       <div className="learning-body">
-        {/* Sidebar wrapper (mobile collapses) */}
         <div className={`learning-sidebar-wrapper ${mobileSidebarOpen ? 'is-open' : ''}`}>
           <LearningSidebar
             block={block}
             selectedLessonId={activeLesson?.lesson.id ?? null}
             progressMap={progressMap}
+            appIndicatorMap={appIndicatorMap}
             onSelectLesson={handleSelectLesson}
           />
         </div>
 
-        {/* Lesson area */}
         <div className="learning-main">
           {activeLesson ? (
             <LessonPanel
               active={activeLesson}
               progressRow={progressRow}
+              userId={userId}
               onProgress={(pct, sec) => onProgress(activeLesson.lesson.id, pct, sec)}
               onComplete={() => onComplete(activeLesson.lesson.id)}
               onReset={() => onReset(activeLesson.lesson.id)}
               onNavigate={handleNavigateById}
+              onAppSaved={onAppRecordSaved}
             />
           ) : (
             <div className="learning-empty">Select a lesson to begin.</div>
@@ -424,23 +488,30 @@ const LearningInterface: React.FC<LearningInterfaceProps> = ({
 };
 
 // ═══════════════════════════════════════════════════════════════
-// ROOT CLASSROOM PAGE (manages landing ↔ learning interface)
+// ROOT CLASSROOM PAGE
 // ═══════════════════════════════════════════════════════════════
 export const ClassroomPage: React.FC = () => {
   const { user } = useAuth();
 
-  const [selectedBlock, setSelectedBlock] = useState<ClassroomBlock | null>(null);
-  const [progressMap, setProgressMap]     = useState<Map<string, ClassroomProgressRow>>(new Map());
-  const [progressLoading, setProgressLoading] = useState(true);
+  const [selectedBlock,    setSelectedBlock]    = useState<ClassroomBlock | null>(null);
+  const [progressMap,      setProgressMap]      = useState<Map<string, ClassroomProgressRow>>(new Map());
+  const [appRecordsMap,    setAppRecordsMap]    = useState<Map<string, ApplicationRecord>>(new Map());
+  const [progressLoading,  setProgressLoading]  = useState(true);
 
+  // Load both progress and application records in parallel
   useEffect(() => {
     if (!user) return;
     setProgressLoading(true);
-    getLessonProgressMap(user.id)
-      .then(map => setProgressMap(map))
-      .finally(() => setProgressLoading(false));
+    Promise.all([
+      getLessonProgressMap(user.id),
+      getAllApplicationRecords(user.id),
+    ]).then(([progMap, appMap]) => {
+      setProgressMap(progMap);
+      setAppRecordsMap(appMap);
+    }).finally(() => setProgressLoading(false));
   }, [user]);
 
+  // ── Progress handlers ────────────────────────────────────
   const handleProgress = useCallback(async (lessonId: string, pct: number, sec: number) => {
     if (!user) return;
     const completed = pct >= 100;
@@ -472,6 +543,16 @@ export const ClassroomPage: React.FC = () => {
     await resetLessonProgress(user.id, lessonId);
   }, [user]);
 
+  // ── Application record saved handler (refresh indicator map) ──
+  const handleAppRecordSaved = useCallback((record: ApplicationRecord) => {
+    setAppRecordsMap(prev => {
+      const next = new Map(prev);
+      next.set(record.lesson_id, record);
+      return next;
+    });
+  }, []);
+
+  // ── Render ───────────────────────────────────────────────
   if (progressLoading) {
     return (
       <div className="classroom-skeleton">
@@ -494,10 +575,13 @@ export const ClassroomPage: React.FC = () => {
       <LearningInterface
         block={selectedBlock}
         progressMap={progressMap}
+        appRecordsMap={appRecordsMap}
+        userId={user?.id ?? ''}
         onBack={() => setSelectedBlock(null)}
         onProgress={handleProgress}
         onComplete={handleComplete}
         onReset={handleReset}
+        onAppRecordSaved={handleAppRecordSaved}
       />
     );
   }
@@ -505,6 +589,7 @@ export const ClassroomPage: React.FC = () => {
   return (
     <ClassroomLanding
       progressMap={progressMap}
+      appRecordsMap={appRecordsMap}
       onSelectBlock={block => setSelectedBlock(block)}
     />
   );
