@@ -192,3 +192,51 @@ export function calcBlockApplicationStats(
   }
   return { total: lessonIds.length, started, completed };
 }
+
+// ── Dashboard Stats ───────────────────────────────────────────
+
+export interface ApplicationStats {
+  totalApplied:    number;  // status is In Progress / Completed / Failed
+  totalCompleted:  number;  // status = Completed
+  totalFailed:     number;  // status = Failed
+  totalResults:    number;  // has outcome content
+  dueForReview:    number;  // review_date <= today
+  applicationPercent: number; // totalApplied / 104 * 100
+}
+
+const TOTAL_CURRICULUM_LESSONS = 104;
+
+/**
+ * Fetch lightweight aggregate application statistics for the dashboard.
+ * Does NOT load full records — only the fields needed for counting.
+ */
+export async function getApplicationStats(userId: string): Promise<ApplicationStats> {
+  const { data, error } = await supabase
+    .from('application_records')
+    .select('status, outcome, review_date')
+    .eq('user_id', userId);
+
+  if (error || !data) {
+    return { totalApplied: 0, totalCompleted: 0, totalFailed: 0, totalResults: 0, dueForReview: 0, applicationPercent: 0 };
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  let applied = 0, completed = 0, failed = 0, results = 0, due = 0;
+
+  for (const row of (data as { status: string; outcome: string | null; review_date: string | null }[])) {
+    if (row.status === 'In Progress' || row.status === 'Completed' || row.status === 'Failed') applied++;
+    if (row.status === 'Completed') completed++;
+    if (row.status === 'Failed') failed++;
+    if (row.outcome) results++;
+    if (row.review_date && row.review_date <= today) due++;
+  }
+
+  return {
+    totalApplied:       applied,
+    totalCompleted:     completed,
+    totalFailed:        failed,
+    totalResults:       results,
+    dueForReview:       due,
+    applicationPercent: Math.round((applied / TOTAL_CURRICULUM_LESSONS) * 100),
+  };
+}

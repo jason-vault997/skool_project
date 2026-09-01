@@ -9,6 +9,7 @@ import { useAuth } from '../lib/auth/AuthContext';
 import { getAllModulesWithProgress } from '../lib/data/modules';
 import { getMetricsForToday, getAllTimeMetrics } from '../lib/data/businessMetrics';
 import { getUpcomingSession } from '../lib/data/sessions';
+import { getApplicationStats, ApplicationStats } from '../lib/data/applicationRecords';
 import {
   sampleCheckInData,
   sampleCockyMessage,
@@ -63,10 +64,11 @@ function computeTrackProgress(modules: ModuleWithProgress[]): { name: string; pr
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) => {
   const { user, profile } = useAuth();
 
-  const [modules, setModules]         = useState<ModuleWithProgress[]>([]);
+  const [modules, setModules]                 = useState<ModuleWithProgress[]>([]);
   const [todayMetrics, setTodayMetrics]       = useState<BusinessMetric | null>(null);
   const [allTimeStats, setAllTimeStats]       = useState<AllTimeBusinessStats | null>(null);
   const [upcomingSession, setUpcomingSession] = useState<Session | null>(null);
+  const [appStats, setAppStats]               = useState<ApplicationStats | null>(null);
   const [dataLoading, setDataLoading]         = useState(true);
 
   useEffect(() => {
@@ -77,11 +79,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
       getMetricsForToday(user.id),
       getAllTimeMetrics(user.id),
       getUpcomingSession(),
-    ]).then(([mods, today, allTime, upcoming]) => {
+      getApplicationStats(user.id),
+    ]).then(([mods, today, allTime, upcoming, apps]) => {
       setModules(mods);
       setTodayMetrics(today);
       setAllTimeStats(allTime);
       setUpcomingSession(upcoming);
+      setAppStats(apps);
     }).finally(() => setDataLoading(false));
   }, [user]);
 
@@ -289,13 +293,40 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
           </div>
         </div>
 
-        {/* Execution vs Learning */}
+        {/* Execution vs Learning — now with real application % */}
         <ExecutionVsLearningCard
           learningPercent={trackProgress[0]?.progress ?? 0}
-          applicationPercent={0}
+          applicationPercent={appStats?.applicationPercent ?? 0}
           currentClients={totalClients}
           targetClients={100}
         />
+
+        {/* Execution Pulse — application behavior stats */}
+        {!dataLoading && appStats && (appStats.totalApplied > 0 || appStats.dueForReview > 0) && (
+          <div className="execution-pulse-card skool-card">
+            <span className="ep-header">EXECUTION PULSE</span>
+            <div className="ep-stats">
+              <div className="ep-stat">
+                <span className="ep-num">{appStats.totalApplied}</span>
+                <span className="ep-lbl">Applied</span>
+              </div>
+              <div className="ep-stat">
+                <span className="ep-num">{appStats.totalCompleted}</span>
+                <span className="ep-lbl">Completed</span>
+              </div>
+              <div className="ep-stat">
+                <span className="ep-num">{appStats.totalResults}</span>
+                <span className="ep-lbl">Results</span>
+              </div>
+              {appStats.dueForReview > 0 && (
+                <div className="ep-stat ep-stat-alert">
+                  <span className="ep-num">{appStats.dueForReview}</span>
+                  <span className="ep-lbl">Due Review</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Today's Business Metrics */}
         <TodayBusinessCard

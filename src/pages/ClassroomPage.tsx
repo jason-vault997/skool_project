@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
-  Check, Circle, PlayCircle, Menu, X, RotateCcw,
+  Check, Circle, PlayCircle, Menu, X, RotateCcw, CalendarClock,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth/AuthContext';
 import { YouTubePlayer } from '../components/classroom/YouTubePlayer';
@@ -83,11 +83,28 @@ const ClassroomLanding: React.FC<LandingPageProps> = ({
     Array.from(progressMap.entries()).map(([k, v]) => [k, v.progress_pct])
   );
 
+  // Review-due: lessons whose review_date is today or in the past
+  const today = new Date().toISOString().slice(0, 10);
+  const reviewDueCount = Array.from(appRecordsMap.values())
+    .filter(r => r.review_date && r.review_date <= today).length;
+
   return (
     <div className="classroom-landing">
       <div className="classroom-landing-header">
         <h1 className="classroom-landing-title">Classroom</h1>
       </div>
+
+      {/* Review-due banner */}
+      {reviewDueCount > 0 && (
+        <div className="classroom-review-banner">
+          <CalendarClock size={15} />
+          <span>
+            <strong>{reviewDueCount}</strong>&nbsp;
+            {reviewDueCount === 1 ? 'lesson' : 'lessons'} ready for review
+            — open the lesson and update your reflection.
+          </span>
+        </div>
+      )}
       <div className="classroom-cards-grid">
         {CLASSROOM_DATA.map(block => {
           const progress      = calcBlockProgress(block, pctMap);
@@ -293,6 +310,7 @@ interface LessonPanelProps {
   active:          ActiveLesson;
   progressRow:     ClassroomProgressRow | undefined;
   userId:          string;
+  appRecord:       ApplicationRecord | undefined;
   onProgress:      (pct: number, sec: number) => void;
   onComplete:      () => void;
   onReset:         () => void;
@@ -301,13 +319,19 @@ interface LessonPanelProps {
 }
 
 const LessonPanel: React.FC<LessonPanelProps> = ({
-  active, progressRow, userId, onProgress, onComplete, onReset, onNavigate, onAppSaved,
+  active, progressRow, userId, appRecord, onProgress, onComplete, onReset, onNavigate, onAppSaved,
 }) => {
   const { lesson, block, mod } = active;
   const nextLesson  = useMemo(() => findNextLesson(lesson.id), [lesson.id]);
   const isCompleted = progressRow?.completed === true || (progressRow?.progress_pct ?? 0) >= 100;
   const progressPct = progressRow?.progress_pct ?? 0;
   const lastPosSec  = progressRow?.last_pos_sec ?? 0;
+
+  // Lesson signal derivations
+  const isApplied = appRecord
+    ? (appRecord.status !== 'Not Started' || !!appRecord.mission)
+    : false;
+  const hasResult = !!(appRecord?.outcome);
 
   return (
     <div className="lesson-panel">
@@ -371,6 +395,22 @@ const LessonPanel: React.FC<LessonPanelProps> = ({
             <ChevronRight size={14} />
           </button>
         )}
+      </div>
+
+      {/* ── Lesson signals: WATCHED · APPLIED · RESULT ── */}
+      <div className="lesson-signals">
+        <span className={`lesson-signal ${isCompleted ? 'sig-done' : 'sig-none'}`}>
+          {isCompleted ? <Check size={10} strokeWidth={3} /> : <Circle size={10} strokeWidth={2} />}
+          Watched
+        </span>
+        <span className="sig-sep">·</span>
+        <span className={`lesson-signal ${isApplied ? 'sig-active' : 'sig-none'}`}>
+          Applied
+        </span>
+        <span className="sig-sep">·</span>
+        <span className={`lesson-signal ${hasResult ? 'sig-active' : 'sig-none'}`}>
+          Result
+        </span>
       </div>
 
       {/* ── APPLICATION ENGINE ── (key=lesson.id ensures fresh load per lesson) */}
@@ -472,6 +512,7 @@ const LearningInterface: React.FC<LearningInterfaceProps> = ({
               active={activeLesson}
               progressRow={progressRow}
               userId={userId}
+              appRecord={appRecordsMap.get(activeLesson.lesson.id)}
               onProgress={(pct, sec) => onProgress(activeLesson.lesson.id, pct, sec)}
               onComplete={() => onComplete(activeLesson.lesson.id)}
               onReset={() => onReset(activeLesson.lesson.id)}

@@ -1,6 +1,6 @@
 /* ============================================================
-   BUILD100 — Application Engine Component
-   Phase 4: Embedded in LessonPanel below video + actions
+   BUILD100 — Application Engine v2 (Phase 5)
+   3-stage: DECIDE → EXECUTE → REFLECT
    ============================================================ */
 
 /* ── Outer container ── */
@@ -12,12 +12,12 @@
   overflow: hidden;
 }
 
-/* ── Collapse header (click to expand/collapse) ── */
+/* ── Collapse header ── */
 .app-engine-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 13px 18px;
   cursor: pointer;
   background: #fff;
   border: none;
@@ -27,13 +27,8 @@
   border-bottom: 1px solid transparent;
 }
 
-.app-engine-header:hover {
-  background: var(--bg-subtle);
-}
-
-.app-engine-header.is-open {
-  border-bottom-color: var(--border-light);
-}
+.app-engine-header:hover { background: var(--bg-subtle); }
+.app-engine-header.is-open { border-bottom-color: var(--border-light); }
 
 .app-engine-header-left {
   display: flex;
@@ -49,75 +44,120 @@
   color: var(--text-primary);
 }
 
-.app-engine-status-pill {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 9px;
-  border-radius: 99px;
-}
-
-.app-status-pill-none       { background: var(--bg-subtle);       color: var(--text-muted); }
-.app-status-pill-not-started{ background: #f3f4f6;                 color: #6b7280; }
-.app-status-pill-in-progress{ background: var(--accent-amber-soft); color: #92400e; }
-.app-status-pill-completed  { background: var(--accent-emerald-soft); color: #065f46; }
-.app-status-pill-failed     { background: var(--accent-rose-soft);  color: #991b1b; }
-.app-status-pill-skipped    { background: #f3f4f6;                 color: #6b7280; }
-
 .app-engine-chevron {
   color: var(--text-muted);
   transition: transform 0.2s;
   flex-shrink: 0;
 }
 
-.app-engine-chevron.is-open {
-  transform: rotate(180deg);
+.app-engine-chevron.is-open { transform: rotate(180deg); }
+
+/* ── Status pills ── */
+.app-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 99px;
+  flex-shrink: 0;
 }
 
-/* ── Expanded body ── */
+.app-pill-none     { background: var(--bg-subtle);             color: var(--text-muted); }
+.app-pill-progress { background: var(--accent-amber-soft);     color: #92400e; }
+.app-pill-done     { background: var(--accent-emerald-soft);   color: #065f46; }
+.app-pill-failed   { background: var(--accent-rose-soft);      color: #991b1b; }
+.app-pill-skipped  { background: #f3f4f6;                      color: #6b7280; }
+
+/* ── Engine body ── */
 .app-engine-body {
-  padding: 20px 18px 24px;
   display: flex;
   flex-direction: column;
-  gap: 28px;
 }
 
-/* ── Section (LEARN / APPLY / RESULT / REFLECT) ── */
-.app-section {
+.app-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 18px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ── Stage tabs ── */
+.app-stage-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-subtle);
+}
+
+.app-stage-tab {
+  flex: 1;
+  padding: 9px 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  text-align: center;
+}
+
+.app-stage-tab:hover { color: var(--text-primary); background: #ededee; }
+
+.app-stage-tab.is-active {
+  color: var(--brand-green-dark);
+  border-bottom-color: var(--brand-green-dark);
+  background: #fff;
+}
+
+/* ── Stage content area ── */
+.app-stage-content {
+  padding: 18px 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.app-section-label {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--brand-green);
-  padding-bottom: 8px;
-  border-bottom: 1.5px solid var(--border-light);
-}
-
-/* ── Field group ── */
-.app-field {
+/* ── Question block ── */
+.app-q-block {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
-.app-field-label {
-  font-size: 12px;
+.app-q-label {
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
+  line-height: 1.35;
 }
 
-.app-field-hint {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 400;
-  margin-top: -2px;
+/* ── Single-line input ── */
+.app-single-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: 13.5px;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  transition: border-color 0.15s, background 0.15s;
+  box-sizing: border-box;
 }
 
+.app-single-input:focus {
+  outline: none;
+  border-color: var(--text-primary);
+  background: #fff;
+}
+
+.app-single-input::placeholder { color: var(--text-muted); font-style: italic; }
+
+/* ── Textarea ── */
 .app-textarea {
   width: 100%;
   min-height: 80px;
@@ -140,13 +180,103 @@
   background: #fff;
 }
 
-.app-textarea::placeholder {
-  color: var(--text-muted);
-  font-style: italic;
+.app-textarea::placeholder { color: var(--text-muted); font-style: italic; }
+.app-textarea.app-textarea-sm { min-height: 56px; }
+
+/* ── Choice buttons (Applying it / Testing it / Not relevant) ── */
+.app-choice-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.app-textarea.app-textarea-sm {
-  min-height: 60px;
+.app-choice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: #fff;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.app-choice-btn:hover {
+  border-color: var(--brand-green);
+  color: var(--text-primary);
+  background: var(--bg-subtle);
+}
+
+.app-choice-btn.is-selected {
+  border-color: var(--brand-green-dark);
+  background: var(--brand-green-dark);
+  color: var(--brand-lime);
+}
+
+.app-choice-btn.choice-skip {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.app-choice-btn.choice-skip.is-selected {
+  border-color: #6b7280;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* ── Skip confirm ── */
+.app-skip-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: #f9fafb;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+
+/* ── Mission / Outcome reminder cards ── */
+.app-mission-reminder,
+.app-outcome-reminder {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--brand-green-dark);
+  background: #fafafa;
+}
+
+.app-outcome-reminder.outcome-failed {
+  border-left-color: var(--accent-rose);
+}
+
+.app-outcome-reminder.outcome-done {
+  border-left-color: var(--accent-emerald);
+}
+
+.app-reminder-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.app-reminder-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-style: italic;
+  line-height: 1.45;
 }
 
 /* ── Status select ── */
@@ -170,12 +300,8 @@
   min-width: 160px;
 }
 
-.app-status-select:focus {
-  outline: none;
-  border-color: var(--text-primary);
-}
+.app-status-select:focus { outline: none; border-color: var(--text-primary); }
 
-/* Chevron arrow for select */
 .app-status-select-wrapper::after {
   content: '';
   position: absolute;
@@ -190,12 +316,9 @@
   pointer-events: none;
 }
 
-/* Status-specific select colors */
-.app-status-select[data-status="Not Started"]  { color: #6b7280; }
-.app-status-select[data-status="In Progress"]  { color: #92400e; background: var(--accent-amber-soft); border-color: #fcd34d; }
-.app-status-select[data-status="Completed"]    { color: #065f46; background: var(--accent-emerald-soft); border-color: #6ee7b7; }
-.app-status-select[data-status="Failed"]       { color: #991b1b; background: var(--accent-rose-soft); border-color: #fca5a5; }
-.app-status-select[data-status="Skipped"]      { color: #6b7280; }
+.app-status-select[data-status="In Progress"] { color: #92400e; background: var(--accent-amber-soft);   border-color: #fcd34d; }
+.app-status-select[data-status="Completed"]   { color: #065f46; background: var(--accent-emerald-soft); border-color: #6ee7b7; }
+.app-status-select[data-status="Failed"]      { color: #991b1b; background: var(--accent-rose-soft);    border-color: #fca5a5; }
 
 /* ── Date input ── */
 .app-date-input {
@@ -210,10 +333,32 @@
   width: 180px;
 }
 
-.app-date-input:focus {
-  outline: none;
-  border-color: var(--text-primary);
-  background: #fff;
+.app-date-input:focus { outline: none; border-color: var(--text-primary); background: #fff; }
+
+/* ── Depth toggle ── */
+.app-depth-toggle {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.app-depth-toggle:hover { color: var(--text-primary); border-color: var(--border-dark); }
+
+.app-depth-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
 }
 
 /* ── Save row ── */
@@ -221,8 +366,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-top: 4px;
   flex-wrap: wrap;
+  padding-top: 2px;
 }
 
 .app-save-btn {
@@ -237,53 +382,30 @@
   font-family: var(--font-family);
   font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.02em;
   cursor: pointer;
   transition: background 0.15s, transform 0.12s;
+  white-space: nowrap;
 }
 
-.app-save-btn:hover:not(:disabled) {
-  background: var(--brand-green);
-  transform: translateY(-1px);
+.app-save-btn:hover:not(:disabled) { background: var(--brand-green); transform: translateY(-1px); }
+.app-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.app-saved-msg {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent-emerald);
 }
 
-.app-save-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.app-save-status {
+.app-error-msg {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12.5px;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.app-save-status.saving  { color: var(--text-muted); }
-.app-save-status.saved   { color: var(--accent-emerald); }
-.app-save-status.error   { color: var(--accent-rose); }
-
-/* ── Mobile ── */
-@media (max-width: 700px) {
-  .app-engine-body {
-    padding: 16px 14px 20px;
-    gap: 22px;
-  }
-
-  .app-textarea {
-    font-size: 14px; /* slightly larger for mobile comfort */
-  }
-
-  .app-date-input {
-    width: 100%;
-  }
-
-  .app-status-select {
-    width: 100%;
-    min-width: unset;
-  }
+  color: var(--accent-rose);
 }
 
 /* ── Sidebar application indicator dots ── */
@@ -291,14 +413,28 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 12px;
-  height: 12px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
-  margin-left: 2px;
+  margin-left: 3px;
+  margin-top: 2px;
 }
 
 .sidebar-app-dot.dot-none      { display: none; }
-.sidebar-app-dot.dot-started   { background: var(--accent-amber); opacity: 0.8; }
+.sidebar-app-dot.dot-started   { background: var(--accent-amber); }
 .sidebar-app-dot.dot-completed { background: var(--accent-emerald); }
 .sidebar-app-dot.dot-failed    { background: var(--accent-rose); }
+
+/* ── Spin animation ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }
+
+/* ── Mobile ── */
+@media (max-width: 700px) {
+  .app-stage-content { padding: 14px 14px 18px; }
+  .app-choice-btns { flex-direction: column; }
+  .app-choice-btn { justify-content: center; }
+  .app-date-input { width: 100%; }
+  .app-status-select { width: 100%; min-width: unset; }
+}

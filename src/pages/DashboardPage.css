@@ -283,3 +283,55 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Execution Pulse Card ── */
+.execution-pulse-card {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ep-header {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-green);
+}
+
+.ep-stats {
+  display: flex;
+  gap: 0;
+}
+
+.ep-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-right: 1px solid var(--border-light);
+}
+
+.ep-stat:last-child { border-right: none; }
+
+.ep-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.ep-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ep-stat.ep-stat-alert .ep-num { color: #92400e; }
+.ep-stat.ep-stat-alert .ep-lbl { color: #92400e; }

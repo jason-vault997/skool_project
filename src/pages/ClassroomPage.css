@@ -1,7 +1,51 @@
-/* ============================================================
-   BUILD100 — Classroom Page v4
-   Landing page (5 cards) → Block learning interface
-   ============================================================ */
+/* ── Lesson signals: WATCHED · APPLIED · RESULT ── */
+.lesson-signals {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 2px;
+  margin-top: -4px;
+}
+
+.lesson-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+
+.lesson-signal.sig-done   { color: var(--accent-emerald); }
+.lesson-signal.sig-active { color: var(--brand-green-dark); }
+.lesson-signal.sig-none   { color: var(--text-muted); }
+
+.sig-sep {
+  color: var(--border-dark);
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ── Classroom review-due banner ── */
+.classroom-review-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  margin-bottom: 4px;
+  background: var(--accent-amber-soft);
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.classroom-review-banner strong { font-weight: 800; }
+
+
 
 /* ══════════════════════════════════════════════
    SKELETON / LOADING

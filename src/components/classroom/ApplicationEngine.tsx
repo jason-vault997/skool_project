@@ -1,149 +1,185 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronDown, Save, Check, AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  ChevronDown, Check, AlertCircle, Loader2,
+  BookOpen, Zap, RotateCcw,
+} from 'lucide-react';
 import {
   ApplicationRecord,
   ApplicationStatus,
-  APPLICATION_STATUSES,
 } from '../../lib/supabase/types';
 import {
   getApplicationRecord,
   upsertApplicationRecord,
-  ApplicationFields,
 } from '../../lib/data/applicationRecords';
 import './ApplicationEngine.css';
 
-// ── Helpers ──────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────
+type Stage      = 'decide' | 'execute' | 'reflect';
+type ApplyChoice = 'apply' | 'test' | 'skip' | null;
+type SaveState  = 'idle' | 'saving' | 'saved' | 'error';
 
-function statusPillClass(status: ApplicationStatus | undefined): string {
-  switch (status) {
-    case 'In Progress': return 'app-engine-status-pill app-status-pill-in-progress';
-    case 'Completed':   return 'app-engine-status-pill app-status-pill-completed';
-    case 'Failed':      return 'app-engine-status-pill app-status-pill-failed';
-    case 'Skipped':     return 'app-engine-status-pill app-status-pill-skipped';
-    default:            return 'app-engine-status-pill app-status-pill-not-started';
+// ── Helpers ───────────────────────────────────────────────────
+function deriveStage(rec: ApplicationRecord | null): Stage {
+  if (!rec || rec.status === 'Not Started' || rec.status === 'Skipped') return 'decide';
+  if (rec.status === 'In Progress') return 'execute';
+  return 'reflect'; // Completed, Failed
+}
+
+function deriveApplyChoice(rec: ApplicationRecord | null): ApplyChoice {
+  if (!rec) return null;
+  if (rec.status === 'Skipped') return 'skip';
+  if (rec.experiment) return 'test';
+  if (rec.mission || rec.status === 'In Progress' || rec.status === 'Completed' || rec.status === 'Failed') return 'apply';
+  return null;
+}
+
+function pillClass(s: ApplicationStatus): string {
+  switch (s) {
+    case 'In Progress': return 'app-pill app-pill-progress';
+    case 'Completed':   return 'app-pill app-pill-done';
+    case 'Failed':      return 'app-pill app-pill-failed';
+    case 'Skipped':     return 'app-pill app-pill-skipped';
+    default:            return 'app-pill app-pill-none';
   }
 }
 
-function statusLabel(status: ApplicationStatus | undefined, hasRecord: boolean): string {
-  if (!hasRecord) return 'Not Started';
-  return status ?? 'Not Started';
-}
-
 // ── Component ─────────────────────────────────────────────────
-
 interface ApplicationEngineProps {
   lessonId: string;
   userId:   string;
-  /** Called after a successful save so parent can refresh indicator map */
   onSaved?: (record: ApplicationRecord) => void;
 }
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
-
 export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
-  lessonId,
-  userId,
-  onSaved,
+  lessonId, userId, onSaved,
 }) => {
-  // ── UI state ─────────────────────────────────────────────
-  const [isOpen, setIsOpen]       = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [saveState, setSaveState] = useState<SaveState>('idle');
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ── UI state
+  const [isOpen,        setIsOpen]        = useState(false);
+  const [loading,       setLoading]       = useState(false);
+  const [saveState,     setSaveState]     = useState<SaveState>('idle');
+  const [currentStage,  setCurrentStage]  = useState<Stage>('decide');
+  const [applyChoice,   setApplyChoice]   = useState<ApplyChoice>(null);
+  const [showDepth,     setShowDepth]     = useState(false);
+  const [record,        setRecord]        = useState<ApplicationRecord | null>(null);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Record state (controlled form) ───────────────────────
-  const [record,        setRecord]       = useState<ApplicationRecord | null>(null);
-  const [notes,         setNotes]        = useState('');
-  const [keyConcepts,   setKeyConcepts]  = useState('');
-  const [importance,    setImportance]   = useState('');
-  const [mission,       setMission]      = useState('');
-  const [commitment,    setCommitment]   = useState('');
-  const [experiment,    setExperiment]   = useState('');
-  const [status,        setStatus]       = useState<ApplicationStatus>('Not Started');
-  const [outcome,       setOutcome]      = useState('');
-  const [reflection,    setReflection]   = useState('');
-  const [reviewDate,    setReviewDate]   = useState('');
+  // ── Form state (shared across stages)
+  const [keyConcepts, setKeyConcepts] = useState('');
+  const [mission,     setMission]     = useState('');
+  const [reviewDate,  setReviewDate]  = useState('');
+  const [experiment,  setExperiment]  = useState('');
+  const [outcome,     setOutcome]     = useState('');
+  const [status,      setStatus]      = useState<ApplicationStatus>('Not Started');
+  const [reflection,  setReflection]  = useState('');
+  const [notes,       setNotes]       = useState('');
+  const [importance,  setImportance]  = useState('');
+  const [commitment,  setCommitment]  = useState('');
 
-  // ── Load record on mount (or when lessonId changes) ──────
+  // ── Load record when lesson changes
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setSaveState('idle');
+    setShowDepth(false);
 
     getApplicationRecord(userId, lessonId).then(rec => {
       if (cancelled) return;
       setRecord(rec);
       if (rec) {
-        setNotes(rec.notes         ?? '');
         setKeyConcepts(rec.key_concepts ?? '');
-        setImportance(rec.importance   ?? '');
-        setMission(rec.mission         ?? '');
-        setCommitment(rec.commitment   ?? '');
-        setExperiment(rec.experiment   ?? '');
-        setStatus(rec.status           ?? 'Not Started');
-        setOutcome(rec.outcome         ?? '');
-        setReflection(rec.reflection   ?? '');
-        setReviewDate(rec.review_date  ?? '');
+        setMission(rec.mission          ?? '');
+        setReviewDate(rec.review_date   ?? '');
+        setExperiment(rec.experiment    ?? '');
+        setOutcome(rec.outcome          ?? '');
+        setStatus(rec.status            ?? 'Not Started');
+        setReflection(rec.reflection    ?? '');
+        setNotes(rec.notes              ?? '');
+        setImportance(rec.importance    ?? '');
+        setCommitment(rec.commitment    ?? '');
+        setApplyChoice(deriveApplyChoice(rec));
       } else {
-        // Reset to empty
-        setNotes(''); setKeyConcepts(''); setImportance('');
-        setMission(''); setCommitment(''); setExperiment('');
-        setStatus('Not Started'); setOutcome(''); setReflection(''); setReviewDate('');
+        setKeyConcepts(''); setMission(''); setReviewDate(''); setExperiment('');
+        setOutcome(''); setStatus('Not Started'); setReflection('');
+        setNotes(''); setImportance(''); setCommitment('');
+        setApplyChoice(null);
       }
+      setCurrentStage(deriveStage(rec));
       setLoading(false);
     });
 
     return () => { cancelled = true; };
   }, [lessonId, userId]);
 
-  // ── Clear "Saved" feedback after 3 seconds ────────────────
-  useEffect(() => {
-    return () => {
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    };
-  }, []);
+  useEffect(() => () => { if (savedTimer.current) clearTimeout(savedTimer.current); }, []);
 
-  // ── Save ─────────────────────────────────────────────────
-  const handleSave = useCallback(async () => {
+  // ── Core save helper — sends ALL current field values
+  async function doSave(explicitStatus: ApplicationStatus, advance?: Stage) {
     setSaveState('saving');
-
-    const fields: ApplicationFields = {
-      notes:        notes.trim()        || undefined,
-      key_concepts: keyConcepts.trim()  || undefined,
-      importance:   importance.trim()   || undefined,
-      mission:      mission.trim()      || undefined,
-      commitment:   commitment.trim()   || undefined,
-      experiment:   experiment.trim()   || undefined,
-      status,
-      outcome:      outcome.trim()      || undefined,
-      reflection:   reflection.trim()   || undefined,
-      review_date:  reviewDate          || null,
-    };
-
-    const saved = await upsertApplicationRecord(userId, lessonId, fields);
+    const saved = await upsertApplicationRecord(userId, lessonId, {
+      key_concepts: keyConcepts.trim() || undefined,
+      mission:      mission.trim()     || undefined,
+      experiment:   experiment.trim()  || undefined,
+      review_date:  reviewDate         || null,
+      status:       explicitStatus,
+      outcome:      outcome.trim()     || undefined,
+      reflection:   reflection.trim()  || undefined,
+      notes:        notes.trim()       || undefined,
+      importance:   importance.trim()  || undefined,
+      commitment:   commitment.trim()  || undefined,
+    });
 
     if (saved) {
       setRecord(saved);
       setSaveState('saved');
       onSaved?.(saved);
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-      savedTimerRef.current = setTimeout(() => setSaveState('idle'), 3000);
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => setSaveState('idle'), 2500);
+      if (advance) setCurrentStage(advance);
     } else {
       setSaveState('error');
     }
-  }, [
-    userId, lessonId, notes, keyConcepts, importance,
-    mission, commitment, experiment, status,
-    outcome, reflection, reviewDate, onSaved,
-  ]);
+  }
 
-  // ── Render ───────────────────────────────────────────────
-  const hasRecord  = record !== null;
+  // ── Stage: DECIDE handlers
+  async function handleChoiceSelect(choice: ApplyChoice) {
+    setApplyChoice(choice);
+    if (choice === 'skip') {
+      setStatus('Skipped');
+      await doSave('Skipped');
+    }
+  }
+
+  async function handleDecideSave() {
+    const next: ApplicationStatus = applyChoice === 'skip' ? 'Skipped' : 'In Progress';
+    setStatus(next);
+    await doSave(next, next === 'In Progress' ? 'execute' : undefined);
+  }
+
+  // ── Stage: EXECUTE handler
+  async function handleExecuteSave() {
+    const advance = (status === 'Completed' || status === 'Failed') ? 'reflect' : undefined;
+    await doSave(status, advance);
+  }
+
+  // ── Stage: REFLECT handler
+  async function handleReflectSave() {
+    await doSave(status);
+  }
+
+  // ── Render ────────────────────────────────────────────────
   const isSaving   = saveState === 'saving';
+  const hasRecord  = record !== null;
+  const displayStatus: ApplicationStatus = hasRecord ? status : 'Not Started';
+
+  const STAGES: { key: Stage; label: string }[] = [
+    { key: 'decide',  label: 'Decide' },
+    { key: 'execute', label: 'Execute' },
+    { key: 'reflect', label: 'Reflect' },
+  ];
 
   return (
     <div className="app-engine">
-      {/* ── Header (collapse toggle) ── */}
+      {/* ── Collapse header ── */}
       <button
         className={`app-engine-header ${isOpen ? 'is-open' : ''}`}
         onClick={() => setIsOpen(o => !o)}
@@ -151,194 +187,265 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
       >
         <div className="app-engine-header-left">
           <span className="app-engine-title">Application</span>
-          <span className={statusPillClass(hasRecord ? status : undefined)}>
-            {statusLabel(status, hasRecord)}
-          </span>
+          <span className={pillClass(displayStatus)}>{displayStatus}</span>
         </div>
-        <ChevronDown
-          size={16}
-          className={`app-engine-chevron ${isOpen ? 'is-open' : ''}`}
-        />
+        <ChevronDown size={16} className={`app-engine-chevron ${isOpen ? 'is-open' : ''}`} />
       </button>
 
       {/* ── Expanded body ── */}
       {isOpen && (
         <div className="app-engine-body">
           {loading ? (
-            <div className="app-save-status saving">
-              <Loader2 size={14} className="spin" /> Loading…
-            </div>
+            <div className="app-loading"><Loader2 size={15} className="spin" /> Loading…</div>
           ) : (
             <>
-              {/* ══ LEARN ══ */}
-              <div className="app-section">
-                <span className="app-section-label">Learn</span>
-
-                <div className="app-field">
-                  <label className="app-field-label">Notes</label>
-                  <span className="app-field-hint">What did I learn from this lesson?</span>
-                  <textarea
-                    className="app-textarea"
-                    placeholder="Write your raw notes here…"
-                    value={notes}
-                    onChange={e => setNotes(e.target.value)}
-                    rows={4}
-                  />
-                </div>
-
-                <div className="app-field">
-                  <label className="app-field-label">Key Concepts</label>
-                  <span className="app-field-hint">What are the 2–3 things that actually matter?</span>
-                  <textarea
-                    className="app-textarea app-textarea-sm"
-                    placeholder="e.g. Clarity beats convincing. Gate 1 is budget…"
-                    value={keyConcepts}
-                    onChange={e => setKeyConcepts(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-
-                <div className="app-field">
-                  <label className="app-field-label">Importance</label>
-                  <span className="app-field-hint">Why does this matter to my business right now?</span>
-                  <textarea
-                    className="app-textarea app-textarea-sm"
-                    placeholder="Why is this relevant to where I am today?"
-                    value={importance}
-                    onChange={e => setImportance(e.target.value)}
-                    rows={2}
-                  />
-                </div>
+              {/* Stage tabs */}
+              <div className="app-stage-tabs">
+                {STAGES.map(s => (
+                  <button
+                    key={s.key}
+                    className={`app-stage-tab ${currentStage === s.key ? 'is-active' : ''}`}
+                    onClick={() => setCurrentStage(s.key)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
               </div>
 
-              {/* ══ APPLY ══ */}
-              <div className="app-section">
-                <span className="app-section-label">Apply</span>
+              {/* ═══ DECIDE ═══ */}
+              {currentStage === 'decide' && (
+                <div className="app-stage-content">
 
-                <div className="app-field">
-                  <label className="app-field-label">Application Mission</label>
-                  <span className="app-field-hint">What am I actually going to do with this?</span>
-                  <textarea
-                    className="app-textarea"
-                    placeholder="Be specific. What action am I taking?"
-                    value={mission}
-                    onChange={e => setMission(e.target.value)}
-                    rows={3}
-                  />
+                  <div className="app-q-block">
+                    <label className="app-q-label">
+                      What's the one thing that matters from this lesson?
+                    </label>
+                    <input
+                      type="text"
+                      className="app-single-input"
+                      placeholder="e.g. Clarity closes every sale."
+                      value={keyConcepts}
+                      onChange={e => setKeyConcepts(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="app-q-block">
+                    <label className="app-q-label">Are you applying this?</label>
+                    <div className="app-choice-btns">
+                      <button
+                        className={`app-choice-btn ${applyChoice === 'apply' ? 'is-selected' : ''}`}
+                        onClick={() => handleChoiceSelect('apply')}
+                      >
+                        <Zap size={13} />
+                        Applying it
+                      </button>
+                      <button
+                        className={`app-choice-btn ${applyChoice === 'test' ? 'is-selected' : ''}`}
+                        onClick={() => handleChoiceSelect('test')}
+                      >
+                        <BookOpen size={13} />
+                        Testing it
+                      </button>
+                      <button
+                        className={`app-choice-btn choice-skip ${applyChoice === 'skip' ? 'is-selected' : ''}`}
+                        onClick={() => handleChoiceSelect('skip')}
+                      >
+                        Not relevant
+                      </button>
+                    </div>
+                  </div>
+
+                  {applyChoice === 'skip' && (
+                    <div className="app-skip-confirm">
+                      <Check size={13} />
+                      Marked as not relevant. You can change this anytime.
+                    </div>
+                  )}
+
+                  {(applyChoice === 'apply' || applyChoice === 'test') && (
+                    <>
+                      <div className="app-q-block">
+                        <label className="app-q-label">What are you doing?</label>
+                        <textarea
+                          className="app-textarea app-textarea-sm"
+                          placeholder="Be specific. One concrete action."
+                          value={mission}
+                          onChange={e => setMission(e.target.value)}
+                          rows={2}
+                        />
+                      </div>
+
+                      {applyChoice === 'test' && (
+                        <div className="app-q-block">
+                          <label className="app-q-label">What's the hypothesis?</label>
+                          <textarea
+                            className="app-textarea app-textarea-sm"
+                            placeholder="If I do X, I expect Y because Z…"
+                            value={experiment}
+                            onChange={e => setExperiment(e.target.value)}
+                            rows={2}
+                          />
+                        </div>
+                      )}
+
+                      <div className="app-q-block">
+                        <label className="app-q-label">By when?</label>
+                        <input
+                          type="date"
+                          className="app-date-input"
+                          value={reviewDate}
+                          onChange={e => setReviewDate(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="app-save-row">
+                        <button
+                          className="app-save-btn"
+                          onClick={handleDecideSave}
+                          disabled={isSaving}
+                        >
+                          {isSaving
+                            ? <Loader2 size={13} className="spin" />
+                            : <Zap size={13} />}
+                          {isSaving ? 'Saving…' : "Commit →"}
+                        </button>
+                        {saveState === 'saved' && <span className="app-saved-msg"><Check size={12} /> Saved</span>}
+                        {saveState === 'error' && <span className="app-error-msg"><AlertCircle size={12} /> Failed — check connection</span>}
+                      </div>
+                    </>
+                  )}
                 </div>
+              )}
 
-                <div className="app-field">
-                  <label className="app-field-label">Commitment</label>
-                  <span className="app-field-hint">What specifically am I committing to and by when?</span>
-                  <textarea
-                    className="app-textarea app-textarea-sm"
-                    placeholder="I commit to doing X by [date / call number]…"
-                    value={commitment}
-                    onChange={e => setCommitment(e.target.value)}
-                    rows={2}
-                  />
-                </div>
+              {/* ═══ EXECUTE ═══ */}
+              {currentStage === 'execute' && (
+                <div className="app-stage-content">
+                  {mission && (
+                    <div className="app-mission-reminder">
+                      <span className="app-reminder-label">Your mission</span>
+                      <span className="app-reminder-text">"{mission}"</span>
+                    </div>
+                  )}
 
-                <div className="app-field">
-                  <label className="app-field-label">Experiment <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(optional)</span></label>
-                  <span className="app-field-hint">If testing something — what's the hypothesis?</span>
-                  <textarea
-                    className="app-textarea app-textarea-sm"
-                    placeholder="If I do X, I expect Y to happen because Z…"
-                    value={experiment}
-                    onChange={e => setExperiment(e.target.value)}
-                    rows={2}
-                  />
-                </div>
-              </div>
+                  <div className="app-q-block">
+                    <label className="app-q-label">What happened?</label>
+                    <textarea
+                      className="app-textarea"
+                      placeholder="Describe what actually happened. Don't sugarcoat it."
+                      value={outcome}
+                      onChange={e => setOutcome(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
 
-              {/* ══ RESULT ══ */}
-              <div className="app-section">
-                <span className="app-section-label">Result</span>
+                  <div className="app-q-block">
+                    <label className="app-q-label">Status</label>
+                    <div className="app-status-select-wrapper">
+                      <select
+                        className="app-status-select"
+                        value={status}
+                        data-status={status}
+                        onChange={e => setStatus(e.target.value as ApplicationStatus)}
+                      >
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Failed">Failed</option>
+                        <option value="Skipped">Skipped</option>
+                      </select>
+                    </div>
+                  </div>
 
-                <div className="app-field">
-                  <label className="app-field-label">Status</label>
-                  <div className="app-status-select-wrapper">
-                    <select
-                      className="app-status-select"
-                      value={status}
-                      data-status={status}
-                      onChange={e => setStatus(e.target.value as ApplicationStatus)}
+                  <div className="app-save-row">
+                    <button
+                      className="app-save-btn"
+                      onClick={handleExecuteSave}
+                      disabled={isSaving}
                     >
-                      {APPLICATION_STATUSES.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
+                      {isSaving ? <Loader2 size={13} className="spin" /> : <Check size={13} />}
+                      {isSaving ? 'Saving…' : 'Save Result'}
+                    </button>
+                    {saveState === 'saved' && <span className="app-saved-msg"><Check size={12} /> Saved</span>}
+                    {saveState === 'error' && <span className="app-error-msg"><AlertCircle size={12} /> Failed — check connection</span>}
                   </div>
                 </div>
+              )}
 
-                <div className="app-field">
-                  <label className="app-field-label">Outcome</label>
-                  <span className="app-field-hint">What happened when I applied it?</span>
-                  <textarea
-                    className="app-textarea"
-                    placeholder="Describe what actually happened. Don't sugarcoat it."
-                    value={outcome}
-                    onChange={e => setOutcome(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              {/* ══ REFLECT ══ */}
-              <div className="app-section">
-                <span className="app-section-label">Reflect</span>
-
-                <div className="app-field">
-                  <label className="app-field-label">Reflection</label>
-                  <span className="app-field-hint">What did I learn from the result? What changes next?</span>
-                  <textarea
-                    className="app-textarea"
-                    placeholder="What worked? What failed? What would I do differently?"
-                    value={reflection}
-                    onChange={e => setReflection(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-
-                <div className="app-field">
-                  <label className="app-field-label">Review Date</label>
-                  <span className="app-field-hint">When should I revisit this lesson and result?</span>
-                  <input
-                    type="date"
-                    className="app-date-input"
-                    value={reviewDate}
-                    onChange={e => setReviewDate(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* ══ SAVE ROW ══ */}
-              <div className="app-save-row">
-                <button
-                  className="app-save-btn"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                >
-                  {isSaving ? (
-                    <Loader2 size={13} className="spin" />
-                  ) : (
-                    <Save size={13} />
+              {/* ═══ REFLECT ═══ */}
+              {currentStage === 'reflect' && (
+                <div className="app-stage-content">
+                  {outcome && (
+                    <div className={`app-outcome-reminder ${status === 'Failed' ? 'outcome-failed' : 'outcome-done'}`}>
+                      <span className="app-reminder-label">Result — {status}</span>
+                      <span className="app-reminder-text">"{outcome}"</span>
+                    </div>
                   )}
-                  {isSaving ? 'Saving…' : 'Save Application'}
-                </button>
 
-                {saveState === 'saved' && (
-                  <span className="app-save-status saved">
-                    <Check size={13} /> Saved
-                  </span>
-                )}
-                {saveState === 'error' && (
-                  <span className="app-save-status error">
-                    <AlertCircle size={13} /> Failed to save — check connection
-                  </span>
-                )}
-              </div>
+                  <div className="app-q-block">
+                    <label className="app-q-label">
+                      {status === 'Failed'
+                        ? 'What went wrong? What changes next?'
+                        : 'What did this teach you?'}
+                    </label>
+                    <textarea
+                      className="app-textarea"
+                      placeholder={status === 'Failed'
+                        ? 'What failed? Why? What do you test next?'
+                        : 'What worked? What would you do differently?'}
+                      value={reflection}
+                      onChange={e => setReflection(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="app-q-block">
+                    <label className="app-q-label">Review date</label>
+                    <input
+                      type="date"
+                      className="app-date-input"
+                      value={reviewDate}
+                      onChange={e => setReviewDate(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Depth toggle */}
+                  <button
+                    className="app-depth-toggle"
+                    onClick={() => setShowDepth(d => !d)}
+                  >
+                    {showDepth ? '− Less' : '+ Deeper notes'}
+                  </button>
+
+                  {showDepth && (
+                    <div className="app-depth-fields">
+                      <div className="app-q-block">
+                        <label className="app-q-label">Why did it matter?</label>
+                        <textarea className="app-textarea app-textarea-sm" value={importance} onChange={e => setImportance(e.target.value)} rows={2} placeholder="Importance / context…" />
+                      </div>
+                      <div className="app-q-block">
+                        <label className="app-q-label">Raw notes</label>
+                        <textarea className="app-textarea app-textarea-sm" value={notes} onChange={e => setNotes(e.target.value)} rows={3} placeholder="Anything else worth keeping…" />
+                      </div>
+                      <div className="app-q-block">
+                        <label className="app-q-label">Next commitment</label>
+                        <textarea className="app-textarea app-textarea-sm" value={commitment} onChange={e => setCommitment(e.target.value)} rows={2} placeholder="What's the next specific action?" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="app-save-row">
+                    <button
+                      className="app-save-btn"
+                      onClick={handleReflectSave}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? <Loader2 size={13} className="spin" /> : <RotateCcw size={13} />}
+                      {isSaving ? 'Saving…' : 'Save Reflection'}
+                    </button>
+                    {saveState === 'saved' && <span className="app-saved-msg"><Check size={12} /> Saved</span>}
+                    {saveState === 'error' && <span className="app-error-msg"><AlertCircle size={12} /> Failed — check connection</span>}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
