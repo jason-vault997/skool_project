@@ -508,16 +508,16 @@
 .sidebar-lessons-list {
   list-style: none;
   margin: 0;
-  padding: 2px 0 6px;
+  padding: 2px 0 8px;
   background: #fafafa;
 }
 
 .sidebar-lesson-item {
   width: 100%;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
-  padding: 7px 16px 7px 22px;
+  padding: 8px 14px 8px 16px;
   background: none;
   border: none;
   border-left: 3px solid transparent;
@@ -531,37 +531,70 @@
 }
 
 .sidebar-lesson-item.is-active {
-  background: #fef9e7;
+  background: #f0fdf4;
   border-left-color: var(--brand-green);
 }
 
-.sidebar-lesson-item.is-done .sidebar-lesson-label {
-  color: var(--text-muted);
-}
-
-.sidebar-lesson-icon {
-  display: flex;
+/* Application status dot — LEFT side */
+.sidebar-app-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   flex-shrink: 0;
-  margin-top: 1.5px;
 }
 
-.sidebar-lesson-icon.icon-done  { color: var(--accent-emerald); }
-.sidebar-lesson-icon.icon-progress { color: var(--accent-blue); }
-.sidebar-lesson-icon.icon-empty { color: var(--border-dark); }
+.sidebar-app-dot-placeholder {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+}
 
-.sidebar-lesson-item.is-active .sidebar-lesson-icon.icon-empty { color: var(--text-muted); }
+.dot-completed { background: var(--accent-emerald); }
+.dot-started   { background: var(--accent-amber); }
+.dot-failed    { background: var(--accent-rose); }
 
+/* Lesson title */
 .sidebar-lesson-label {
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 13.5px;
+  font-weight: 450;
   color: var(--text-secondary);
-  line-height: 1.45;
+  line-height: 1.4;
   flex: 1;
+  letter-spacing: -0.01em;
 }
 
 .sidebar-lesson-item.is-active .sidebar-lesson-label {
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.sidebar-lesson-item.is-done .sidebar-lesson-label {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* Right side: prominent green circular check for completed lessons */
+.sidebar-done-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-emerald);
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+}
+
+/* Right side: small amber dot for in-progress */
+.sidebar-inprog-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 /* ── Learning main (right panel) ── */

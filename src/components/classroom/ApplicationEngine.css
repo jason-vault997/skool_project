@@ -1,5 +1,5 @@
 /* ============================================================
-   BUILD100 — Application Engine 2.0 (Phase 5 UX Redesign)
+   BUILD100 — Application Engine 2.0 (Polish Pass)
    State machine: decide → execute → reflect → completed | skipped
    ============================================================ */
 
@@ -18,7 +18,7 @@
   border-color: var(--border-dark);
 }
 
-/* ── Static header (loading state) ────────────────────────── */
+/* ── Static header (loading) ───────────────────────────────── */
 .app-engine-header-static {
   display: flex;
   align-items: center;
@@ -44,8 +44,8 @@
   transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.app-engine-header:hover { background: var(--bg-subtle); }
-.app-engine-header.is-open { border-bottom-color: var(--border-light); }
+.app-engine-header:hover        { background: var(--bg-subtle); }
+.app-engine-header.is-open      { border-bottom-color: var(--border-light); }
 
 .app-engine-header-left {
   display: flex;
@@ -90,11 +90,11 @@
   letter-spacing: 0.02em;
 }
 
-.app-pill-none     { background: var(--bg-subtle);           color: var(--text-muted);   }
-.app-pill-progress { background: var(--accent-amber-soft);   color: #92400e;             }
-.app-pill-done     { background: var(--accent-emerald-soft); color: #065f46;             }
-.app-pill-failed   { background: var(--accent-rose-soft);    color: #991b1b;             }
-.app-pill-skipped  { background: #f3f4f6;                    color: #6b7280;             }
+.app-pill-none     { background: var(--bg-subtle);           color: var(--text-muted);  }
+.app-pill-progress { background: var(--accent-amber-soft);   color: #92400e;            }
+.app-pill-done     { background: var(--accent-emerald-soft); color: #065f46;            }
+.app-pill-failed   { background: var(--accent-rose-soft);    color: #991b1b;            }
+.app-pill-skipped  { background: #f3f4f6;                    color: #6b7280;            }
 
 /* ── Engine body ───────────────────────────────────────────── */
 .app-engine-body {
@@ -107,7 +107,6 @@
   display: flex;
   align-items: center;
   padding: 14px 18px 10px;
-  gap: 0;
   border-bottom: 1px solid var(--border-light);
   background: var(--bg-subtle);
 }
@@ -153,8 +152,6 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  font-size: 10px;
-  font-weight: 800;
   transition: background var(--transition-smooth), color var(--transition-smooth);
 }
 
@@ -172,30 +169,27 @@
   transition: color var(--transition-fast);
 }
 
-/* Done stage */
 .stage-done .stage-step-indicator {
   background: var(--accent-emerald);
   color: white;
 }
 .stage-done .stage-step-label { color: var(--text-secondary); }
 
-/* Current/active stage */
 .stage-current .stage-step-indicator,
-.stage-active .stage-step-indicator {
+.stage-active  .stage-step-indicator {
   background: var(--brand-green-dark);
   color: var(--brand-lime);
 }
 .stage-current .stage-step-label,
-.stage-active .stage-step-label { color: var(--text-primary); font-weight: 800; }
+.stage-active  .stage-step-label { color: var(--text-primary); font-weight: 800; }
 
-/* Locked stage */
 .stage-locked .stage-step-indicator {
   background: var(--border-default);
   color: var(--text-muted);
 }
 .stage-locked .stage-step-label { color: var(--text-muted); opacity: 0.6; }
 
-/* ── Stage content area ────────────────────────────────────── */
+/* ── Stage content ─────────────────────────────────────────── */
 .app-stage-content {
   padding: 20px 20px 22px;
   display: flex;
@@ -203,7 +197,7 @@
   gap: 18px;
 }
 
-/* ── Decide callout header ─────────────────────────────────── */
+/* ── Decide callout ────────────────────────────────────────── */
 .app-decide-callout {
   display: flex;
   flex-direction: column;
@@ -252,7 +246,7 @@
   margin-bottom: 2px;
 }
 
-/* ── Prominent single-line input ───────────────────────────── */
+/* ── Inputs ────────────────────────────────────────────────── */
 .app-single-input {
   width: 100%;
   padding: 10px 14px;
@@ -281,7 +275,6 @@
 
 .app-single-input::placeholder { color: var(--text-muted); font-style: italic; font-weight: 400; }
 
-/* ── Textarea ──────────────────────────────────────────────── */
 .app-textarea {
   width: 100%;
   min-height: 76px;
@@ -384,22 +377,15 @@
   border-color: var(--border-light);
 }
 
-.card-skip .card-title {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
-.card-skip .card-sub {
-  font-size: 11.5px;
-}
+.card-skip .card-title { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); }
+.card-skip .card-sub   { font-size: 11.5px; }
 
 .app-choice-card.card-skip-selected {
   border-color: #9ca3af;
   background: #f3f4f6;
 }
 
-/* ── Deadline / Review chips ───────────────────────────────── */
+/* ── Chips ─────────────────────────────────────────────────── */
 .app-chips {
   display: flex;
   gap: 6px;
@@ -433,7 +419,6 @@
   font-weight: 700;
 }
 
-/* ── Date input ────────────────────────────────────────────── */
 .app-date-input {
   padding: 7px 12px;
   border: 1.5px solid var(--border-default);
@@ -477,13 +462,12 @@
 }
 
 .app-edit-save-row {
-  padding-top: 0;
   border-top: 1px solid var(--border-light);
   padding-top: 14px;
   margin-top: -4px;
 }
 
-/* ── Primary action button ─────────────────────────────────── */
+/* ── Buttons ───────────────────────────────────────────────── */
 .app-primary-btn {
   display: inline-flex;
   align-items: center;
@@ -502,14 +486,9 @@
   white-space: nowrap;
 }
 
-.app-primary-btn:hover:not(:disabled) {
-  background: var(--brand-green-light);
-  transform: translateY(-1px);
-}
-
+.app-primary-btn:hover:not(:disabled) { background: var(--brand-green-light); transform: translateY(-1px); }
 .app-primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Secondary action button ───────────────────────────────── */
 .app-secondary-btn {
   display: inline-flex;
   align-items: center;
@@ -527,14 +506,52 @@
   white-space: nowrap;
 }
 
-.app-secondary-btn:hover:not(:disabled) {
-  border-color: var(--border-dark);
-  background: #fff;
-}
-
+.app-secondary-btn:hover:not(:disabled) { border-color: var(--border-dark); background: #fff; }
 .app-secondary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Mission display in Execute ────────────────────────────── */
+/* ─────────────────── EXECUTE STAGE ──────────────────────── */
+
+/* In-progress microcopy — persistent, never disappears */
+.app-inprogress-msg {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-amber);
+  padding: 8px 12px;
+  background: var(--accent-amber-soft);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent-amber);
+}
+
+/* THE ONE THING shown above mission */
+.app-execute-takeaway {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--border-dark);
+}
+
+.app-execute-takeaway-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.app-execute-takeaway-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Mission + Deadline display */
 .app-mission-display {
   display: flex;
   gap: 0;
@@ -585,7 +602,7 @@
   letter-spacing: -0.01em;
 }
 
-/* ── Execute CTA buttons ───────────────────────────────────── */
+/* Execute CTA buttons */
 .app-execute-cta {
   display: flex;
   gap: 10px;
@@ -610,31 +627,22 @@
   transition: all var(--transition-fast);
 }
 
-.app-execute-did-it {
-  background: var(--brand-green-dark);
-  color: var(--brand-lime);
-}
-
-.app-execute-did-it:hover {
-  background: var(--brand-green-light);
-  transform: translateY(-1px);
-}
+.app-execute-did-it { background: var(--brand-green-dark); color: var(--brand-lime); }
+.app-execute-did-it:hover { background: var(--brand-green-light); transform: translateY(-1px); }
 
 .app-execute-didnt {
   background: var(--bg-subtle);
   color: var(--text-secondary);
   border: 1.5px solid var(--border-default);
 }
-
 .app-execute-didnt:hover {
   background: var(--accent-rose-soft);
   color: var(--accent-rose);
   border-color: var(--accent-rose);
 }
-
 .app-execute-didnt:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Result buttons (WORKED / DIDN'T WORK) ─────────────────── */
+/* Result buttons */
 .app-result-btns {
   display: flex;
   gap: 10px;
@@ -664,28 +672,21 @@
   border-color: var(--accent-emerald);
   color: #065f46;
 }
-
 .app-result-worked:hover:not(:disabled) {
   background: var(--accent-emerald);
   color: white;
   transform: translateY(-1px);
 }
 
-.app-result-failed {
-  background: var(--bg-subtle);
-  color: var(--text-secondary);
-  border-color: var(--border-default);
-}
-
+.app-result-failed { background: var(--bg-subtle); color: var(--text-secondary); }
 .app-result-failed:hover:not(:disabled) {
   background: var(--accent-rose-soft);
   border-color: var(--accent-rose);
   color: #991b1b;
 }
-
 .app-result-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Result summary in Reflect ─────────────────────────────── */
+/* Reflect result summary */
 .app-result-summary {
   display: flex;
   flex-direction: column;
@@ -695,15 +696,8 @@
   border-left: 3px solid;
   background: #fafafa;
 }
-
-.app-result-summary.result-summary-done {
-  border-left-color: var(--accent-emerald);
-}
-
-.app-result-summary.result-summary-failed {
-  border-left-color: var(--accent-rose);
-  background: #fff9f9;
-}
+.app-result-summary.result-summary-done   { border-left-color: var(--accent-emerald); }
+.app-result-summary.result-summary-failed { border-left-color: var(--accent-rose); background: #fff9f9; }
 
 .result-summary-row {
   display: flex;
@@ -712,27 +706,13 @@
   flex-wrap: wrap;
 }
 
-.result-summary-note {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-}
+.result-summary-note { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.result-summary-text { font-size: 13px; font-weight: 500; color: var(--text-primary); font-style: italic; line-height: 1.45; }
 
-.result-summary-text {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-  font-style: italic;
-  line-height: 1.45;
-}
+/* Close loop button */
+.app-close-loop-btn { background: var(--brand-green-dark); font-size: 13px; }
 
-/* ── Close-the-loop button variant ────────────────────────── */
-.app-close-loop-btn {
-  background: var(--brand-green-dark);
-  font-size: 13px;
-}
-
-/* ── Save feedback ─────────────────────────────────────────── */
+/* Save feedback */
 .app-save-feedback {
   display: inline-flex;
   align-items: center;
@@ -764,12 +744,6 @@
 .app-engine-completed {
   border-color: var(--accent-emerald);
   border-width: 1.5px;
-  background: linear-gradient(to bottom, #f0fdf4 0%, white 60px);
-}
-
-.app-engine-completed.app-engine-failed-completed {
-  border-color: var(--accent-rose);
-  background: linear-gradient(to bottom, #fff9f9 0%, white 60px);
 }
 
 .app-completed-header {
@@ -796,6 +770,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .completed-stage-tag {
@@ -809,12 +784,8 @@
   letter-spacing: 0.04em;
 }
 
-.completed-stage-sep {
-  color: var(--border-dark);
-  font-size: 12px;
-}
+.completed-stage-sep { color: var(--border-dark); font-size: 12px; }
 
-/* ── Edit button ───────────────────────────────────────────── */
 .app-edit-btn {
   display: inline-flex;
   align-items: center;
@@ -831,34 +802,29 @@
   transition: all var(--transition-fast);
   flex-shrink: 0;
 }
+.app-edit-btn:hover { border-color: var(--border-dark); color: var(--text-primary); background: var(--bg-subtle); }
 
-.app-edit-btn:hover {
-  border-color: var(--border-dark);
-  color: var(--text-primary);
-  background: var(--bg-subtle);
+/* ── Permanent completion message (replaces the old flash) ── */
+.app-completion-msg {
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-light);
 }
 
-/* ── Loop-closed flash ─────────────────────────────────────── */
-.app-loop-closed-flash {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 18px;
+.completion-msg-done {
   background: var(--brand-green-dark);
   color: var(--brand-lime);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  animation: flashIn 0.3s ease;
 }
 
-@keyframes flashIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
+.completion-msg-failed {
+  background: #1c0a0a;
+  color: #fca5a5;
 }
 
-/* ── Completed record body ─────────────────────────────────── */
+/* Completed record body */
 .app-record-body {
   padding: 16px 18px 18px;
   display: flex;
@@ -888,16 +854,8 @@
   font-style: italic;
 }
 
-.app-record-subtext {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  font-weight: 500;
-  font-style: normal;
-}
-
-.app-record-row.record-row-done .app-record-label { color: var(--accent-emerald); }
+.app-record-row.record-row-done   .app-record-label { color: var(--accent-emerald); }
 .app-record-row.record-row-failed .app-record-label { color: var(--accent-rose); }
-
 .app-record-review { margin-top: 4px; opacity: 0.7; }
 
 /* ═══════════════════════════════════════════════════════════
@@ -912,13 +870,16 @@
   padding: 12px 18px 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
-.app-skipped-text {
-  font-size: 12.5px;
-  color: var(--text-muted);
-  font-weight: 500;
+/* Permanent skip microcopy */
+.app-skipped-msg {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
 }
 
 .app-skipped-note {
@@ -927,30 +888,27 @@
   font-style: italic;
 }
 
-/* ── Spin animation ────────────────────────────────────────── */
-@keyframes spin { to { transform: rotate(360deg); } }
+/* ── Animations ────────────────────────────────────────────── */
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+
 .spin { animation: spin 0.8s linear infinite; }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* ── Mobile responsive ─────────────────────────────────────── */
+/* ── Mobile ────────────────────────────────────────────────── */
 @media (max-width: 680px) {
-  .app-stage-content { padding: 16px 14px 18px; }
-  .app-stage-bar { padding: 12px 14px 8px; }
-  .app-stage-step { padding: 4px 4px; }
-  .stage-step-label { font-size: 10px; }
-  .app-choice-card { padding: 12px 13px; gap: 11px; }
-  .app-execute-cta { flex-direction: column; }
-  .app-execute-btn { min-width: unset; }
-  .app-result-btns { flex-direction: column; }
-  .app-result-btn { min-width: unset; }
-  .app-mission-display { flex-direction: column; }
-  .app-mission-block { border-right: none; border-bottom: 1px solid var(--border-light); }
-  .app-deadline-block { padding: 10px 16px; }
-  .app-chips { gap: 5px; }
-  .app-date-input { width: 100%; }
+  .app-stage-content    { padding: 16px 14px 18px; }
+  .app-stage-bar        { padding: 12px 14px 8px; }
+  .app-stage-step       { padding: 4px; }
+  .stage-step-label     { font-size: 10px; }
+  .app-choice-card      { padding: 12px 13px; gap: 11px; }
+  .app-execute-cta      { flex-direction: column; }
+  .app-execute-btn      { min-width: unset; }
+  .app-result-btns      { flex-direction: column; }
+  .app-result-btn       { min-width: unset; }
+  .app-mission-display  { flex-direction: column; }
+  .app-mission-block    { border-right: none; border-bottom: 1px solid var(--border-light); }
+  .app-deadline-block   { padding: 10px 16px; }
+  .app-chips            { gap: 5px; }
+  .app-date-input       { width: 100%; }
   .app-completed-stages { flex-wrap: wrap; }
 }

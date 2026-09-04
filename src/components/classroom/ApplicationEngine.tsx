@@ -14,23 +14,52 @@ import {
 import './ApplicationEngine.css';
 
 // ─────────────────── Types ────────────────────────────────────
-/**
- * AppMode drives the entire UI state machine:
- *   loading   → spinner
- *   decide    → stage 1: the decision
- *   execute   → stage 2: mission + I DID IT
- *   reflect   → stage 3: result + reflection
- *   completed → read-only closed loop record
- *   skipped   → read-only compact skipped record
- *   edit      → unlocks all 3 stages from completed/skipped
- */
 type AppMode     = 'loading' | 'decide' | 'execute' | 'reflect' | 'completed' | 'skipped' | 'edit';
 type EditStage   = 'decide' | 'execute' | 'reflect';
 type ApplyChoice = 'apply' | 'test' | 'skip' | null;
 type SaveState   = 'idle' | 'saving' | 'saved' | 'error';
-type ExecStep    = 'cta' | 'result'; // cta = big action buttons, result = outcome textarea
+type ExecStep    = 'cta' | 'result';
 type DeadlineChip = 'today' | 'tomorrow' | 'this-week' | 'pick' | null;
 type ReviewChip   = 'none' | '3-days' | '1-week' | '1-month' | 'pick' | null;
+
+// ─────────────────── Microcopy system ─────────────────────────
+/**
+ * Deterministic message picker — same lesson always shows the same
+ * message. Hash is computed from lessonId so it's stable across reloads.
+ */
+function pickMessage(pool: string[], lessonId: string): string {
+  let hash = 0;
+  for (let i = 0; i < lessonId.length; i++) {
+    hash = ((hash * 31) + lessonId.charCodeAt(i)) >>> 0;
+  }
+  return pool[hash % pool.length];
+}
+
+const MSGS_COMPLETED = [
+  'LOOP CLOSED. YOU DIDN\'T JUST WATCH IT.',
+  'YOU LEARNED IT. THEN YOU ACTUALLY USED IT.',
+  'THAT\'S HOW KNOWLEDGE BECOMES SKILL.',
+  'YOU DID THE PART MOST PEOPLE SKIP.',
+  'KEEP THIS ONE. YOU\'LL NEED IT WHEN THE NUMBERS GET BIGGER.',
+];
+
+const MSGS_FAILED = [
+  'DIDN\'T WORK. GOOD. NOW WE KNOW.',
+  'IT FAILED. BETTER HERE THAN AFTER 100 CALLS.',
+  'NOT A WIN. STILL A LESSON.',
+];
+
+const MSGS_SKIPPED = [
+  'YOU SKIPPED IT. DON\'T PRETEND YOU APPLIED IT.',
+  'NOT TODAY. FAIR. JUST DON\'T FORGET WHY YOU SAVED IT.',
+  'YOU LET THIS ONE GO. YOUR CALL.',
+];
+
+const MSGS_IN_PROGRESS = [
+  'YOU SAID YOU\'D DO IT. NOW ACTUALLY DO IT.',
+  'THE LESSON IS DONE. YOUR TURN ISN\'T.',
+  'IT\'S LOCKED IN. DON\'T LET THIS ONE DIE IN YOUR TO-DO LIST.',
+];
 
 // ─────────────────── Helpers ──────────────────────────────────
 function addDays(n: number): string {
@@ -69,8 +98,9 @@ function deriveApplyChoice(rec: ApplicationRecord | null): ApplyChoice {
 }
 
 /**
- * Commitment field stores the deadline label:
+ * commitment field stores the deadline label:
  * "Today" | "Tomorrow" | "This Week" | "YYYY-MM-DD"
+ * This is distinct from review_date (reflection review date).
  */
 function deriveDeadlineChip(commitment: string | null | undefined): DeadlineChip {
   if (!commitment) return null;
@@ -78,7 +108,7 @@ function deriveDeadlineChip(commitment: string | null | undefined): DeadlineChip
   if (commitment === 'Tomorrow') return 'tomorrow';
   if (commitment === 'This Week') return 'this-week';
   if (/^\d{4}-\d{2}-\d{2}$/.test(commitment)) return 'pick';
-  return null; // old freetext — don't match any chip
+  return null;
 }
 
 function deriveReviewChip(dateStr: string | null | undefined): ReviewChip {
@@ -123,24 +153,22 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
   const [execStep,        setExecStep]        = useState<ExecStep>('cta');
   const [deadlineChip,    setDeadlineChip]    = useState<DeadlineChip>(null);
   const [reviewChip,      setReviewChip]      = useState<ReviewChip>('none');
-  const [justCompleted,   setJustCompleted]   = useState(false);
   const [record,          setRecord]          = useState<ApplicationRecord | null>(null);
-  const savedTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const completedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Form state ───────────────────────────────────────────
-  // commitment stores deadline label: "Today" / "Tomorrow" / "This Week" / "YYYY-MM-DD"
-  // review_date stores reflection review date: "YYYY-MM-DD" (separate concept)
+  // commitment = execution deadline label ("Today" / "Tomorrow" / "This Week" / "YYYY-MM-DD")
+  // review_date = reflection review scheduling date — completely separate
   const [keyConcepts,  setKeyConcepts]  = useState('');
   const [mission,      setMission]      = useState('');
   const [experiment,   setExperiment]   = useState('');
-  const [commitment,   setCommitment]   = useState('');   // execution deadline label
-  const [deadlinePick, setDeadlinePick] = useState('');   // YYYY-MM-DD when chip=pick
+  const [commitment,   setCommitment]   = useState('');
+  const [deadlinePick, setDeadlinePick] = useState('');
   const [outcome,      setOutcome]      = useState('');
   const [status,       setStatus]       = useState<ApplicationStatus>('Not Started');
   const [reflection,   setReflection]   = useState('');
-  const [reviewDate,   setReviewDate]   = useState<string | null>(null); // reflection review
-  const [reviewPick,   setReviewPick]   = useState('');   // YYYY-MM-DD when chip=pick
+  const [reviewDate,   setReviewDate]   = useState<string | null>(null);
+  const [reviewPick,   setReviewPick]   = useState('');
   const [notes,        setNotes]        = useState('');
   const [importance,   setImportance]   = useState('');
 
@@ -149,7 +177,6 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
     let cancelled = false;
     setMode('loading');
     setSaveState('idle');
-    setJustCompleted(false);
 
     getApplicationRecord(userId, lessonId).then(rec => {
       if (cancelled) return;
@@ -190,8 +217,7 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
   }, [lessonId, userId]);
 
   useEffect(() => () => {
-    if (savedTimer.current)     clearTimeout(savedTimer.current);
-    if (completedTimer.current) clearTimeout(completedTimer.current);
+    if (savedTimer.current) clearTimeout(savedTimer.current);
   }, []);
 
   // ── Core save ─────────────────────────────────────────────
@@ -201,11 +227,11 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
       key_concepts: keyConcepts.trim() || undefined,
       mission:      mission.trim()     || undefined,
       experiment:   experiment.trim()  || undefined,
-      commitment:   commitment.trim()  || undefined, // deadline label — separate from review_date
+      commitment:   commitment.trim()  || undefined, // deadline label — NOT review_date
       status:       explicitStatus,
       outcome:      outcome.trim()     || undefined,
       reflection:   reflection.trim()  || undefined,
-      review_date:  reviewDate         || null,       // reflection review date only
+      review_date:  reviewDate         || null,       // reflection review date ONLY
       notes:        notes.trim()       || undefined,
       importance:   importance.trim()  || undefined,
     });
@@ -216,15 +242,7 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
       onSaved?.(saved);
       if (savedTimer.current) clearTimeout(savedTimer.current);
       savedTimer.current = setTimeout(() => setSaveState('idle'), 2000);
-
-      if (advanceMode === 'completed') {
-        setJustCompleted(true);
-        setMode('completed');
-        if (completedTimer.current) clearTimeout(completedTimer.current);
-        completedTimer.current = setTimeout(() => setJustCompleted(false), 3500);
-      } else if (advanceMode) {
-        setMode(advanceMode);
-      }
+      if (advanceMode) setMode(advanceMode);
     } else {
       setSaveState('error');
     }
@@ -261,12 +279,11 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
 
   // ── Stage access control ──────────────────────────────────
   /**
-   * In edit mode: all stages accessible.
-   * In normal mode:
+   * Future stages are LOCKED until the prerequisite action is taken.
    *   decide  → always accessible
-   *   execute → only if In Progress / Completed / Failed
-   *   reflect → only if Completed / Failed
-   * Future stages are LOCKED (not clickable).
+   *   execute → only if committed (In Progress / Completed / Failed)
+   *   reflect → only if executed (Completed / Failed)
+   * In edit mode: all stages open.
    */
   function isStageAccessible(stage: EditStage): boolean {
     if (mode === 'edit') return true;
@@ -305,7 +322,6 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
   // ── EXECUTE stage handlers ────────────────────────────────
   async function handleDidntExecute() {
     setStatus('Failed');
-    // Save what we have, advance to reflect with "didn't execute" context
     await doSave('Failed', 'reflect');
   }
 
@@ -321,7 +337,6 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
 
   // ── REFLECT stage handler ─────────────────────────────────
   async function handleCloseLoop() {
-    // Status stays whatever it was from execute (Completed or Failed)
     await doSave(status, 'completed');
   }
 
@@ -364,7 +379,6 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
   const isSaving = saveState === 'saving';
   const displayStatus: ApplicationStatus = record ? (record.status as ApplicationStatus) : 'Not Started';
 
-  // Which stage tab is active
   const activeStageTab: EditStage | null =
     mode === 'decide' ? 'decide' :
     mode === 'execute' ? 'execute' :
@@ -372,16 +386,15 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
     mode === 'edit' ? editStage :
     null;
 
-  // ─────────────────── Render ───────────────────────────────
+  // ─────────────────── Sub-renders ──────────────────────────
 
-  // Stage progress bar — used in all 3 interactive stages + edit mode
+  // Stage progress bar
   const StageBar = () => {
     const stages: { key: EditStage; label: string; num: string }[] = [
       { key: 'decide',  label: 'Decide',  num: '01' },
       { key: 'execute', label: 'Execute', num: '02' },
       { key: 'reflect', label: 'Reflect', num: '03' },
     ];
-
     return (
       <div className="app-stage-bar" role="tablist">
         {stages.map((s, i) => {
@@ -389,7 +402,9 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
           const active = activeStageTab === s.key;
           return (
             <React.Fragment key={s.key}>
-              {i > 0 && <div className={`app-stage-connector ${getStageState(stages[i-1].key) === 'done' ? 'connector-done' : ''}`} />}
+              {i > 0 && (
+                <div className={`app-stage-connector ${getStageState(stages[i-1].key) === 'done' ? 'connector-done' : ''}`} />
+              )}
               <button
                 role="tab"
                 aria-selected={active}
@@ -399,7 +414,7 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                 title={state === 'locked' ? 'Complete the previous stage first' : s.label}
               >
                 <span className="stage-step-indicator">
-                  {state === 'done' ? <Check size={10} strokeWidth={3} /> :
+                  {state === 'done'   ? <Check size={10} strokeWidth={3} /> :
                    state === 'locked' ? <Lock size={9} /> :
                    <span className="stage-step-num">{s.num}</span>}
                 </span>
@@ -412,7 +427,7 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
     );
   };
 
-  // Save feedback row — reused across stages
+  // Save feedback
   const SaveFeedback = () => (
     <div className="app-save-feedback" aria-live="polite">
       {saveState === 'saved' && <span className="app-saved-msg"><Check size={12} /> Saved</span>}
@@ -420,7 +435,9 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
     </div>
   );
 
-  // ── Loading ───────────────────────────────────────────────
+  // ─────────────────── Main render ──────────────────────────
+
+  // Loading state (before collapse button)
   if (mode === 'loading') {
     return (
       <div className="app-engine">
@@ -432,8 +449,13 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
     );
   }
 
-  // ── Completed read-only record ────────────────────────────
+  // ── COMPLETED read-only record ────────────────────────────
   if (mode === 'completed') {
+    // Permanent microcopy — deterministic, based on lessonId
+    const completionMsg = status === 'Failed'
+      ? pickMessage(MSGS_FAILED, lessonId)
+      : pickMessage(MSGS_COMPLETED, lessonId);
+
     return (
       <div className="app-engine app-engine-completed">
         <div className="app-completed-header">
@@ -455,12 +477,10 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
           </div>
         </div>
 
-        {justCompleted && (
-          <div className="app-loop-closed-flash">
-            <Check size={14} strokeWidth={3} />
-            LOOP CLOSED. You didn't just watch it.
-          </div>
-        )}
+        {/* Permanent completion message — never disappears */}
+        <div className={`app-completion-msg ${displayStatus === 'Failed' ? 'completion-msg-failed' : 'completion-msg-done'}`}>
+          {completionMsg}
+        </div>
 
         <div className="app-record-body">
           {keyConcepts && (
@@ -479,9 +499,6 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
             <div className={`app-record-row ${displayStatus === 'Failed' ? 'record-row-failed' : 'record-row-done'}`}>
               <span className="app-record-label">RESULT · {displayStatus}</span>
               <span className="app-record-value">"{outcome}"</span>
-              {displayStatus === 'Failed' && (
-                <span className="app-record-subtext">Didn't work. Now we know.</span>
-              )}
             </div>
           )}
           {reflection && (
@@ -503,8 +520,9 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
     );
   }
 
-  // ── Skipped read-only ─────────────────────────────────────
+  // ── SKIPPED read-only ─────────────────────────────────────
   if (mode === 'skipped') {
+    const skipMsg = pickMessage(MSGS_SKIPPED, lessonId);
     return (
       <div className="app-engine app-engine-skipped">
         <div className="app-completed-header">
@@ -519,7 +537,7 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
           </div>
         </div>
         <div className="app-skipped-body">
-          <span className="app-skipped-text">Deliberately skipped. Not relevant right now.</span>
+          <span className="app-skipped-msg">{skipMsg}</span>
           {keyConcepts && <span className="app-skipped-note">"{keyConcepts}"</span>}
         </div>
       </div>
@@ -527,12 +545,12 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
   }
 
   // ── Interactive stages (decide / execute / reflect / edit) ─
-  const showStageBar = mode === 'decide' || mode === 'execute' || mode === 'reflect' || mode === 'edit';
-  const currentStageKey: EditStage = mode === 'edit' ? editStage : (mode as EditStage);
+  const currentStageKey: EditStage =
+    mode === 'edit' ? editStage : (mode as EditStage);
 
   return (
     <div className="app-engine">
-      {/* ── Collapse header ── */}
+      {/* Collapse header */}
       <button
         className={`app-engine-header ${isOpen ? 'is-open' : ''}`}
         onClick={() => setIsOpen(o => !o)}
@@ -548,18 +566,16 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
 
       {isOpen && (
         <div className="app-engine-body">
-          {showStageBar && <StageBar />}
+          <StageBar />
 
-          {/* ═══════════ DECIDE STAGE ═══════════ */}
+          {/* ═══════════ DECIDE ═══════════ */}
           {currentStageKey === 'decide' && (
             <div className="app-stage-content">
-              {/* Callout header */}
               <div className="app-decide-callout">
                 <span>You watched it.</span>
                 <strong>Now do something with it.</strong>
               </div>
 
-              {/* THE ONE THING */}
               <div className="app-q-block">
                 <label className="app-q-label-major">THE ONE THING</label>
                 <span className="app-q-hint">What are you taking from this lesson?</span>
@@ -573,7 +589,6 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                 />
               </div>
 
-              {/* DECISION CARDS */}
               <div className="app-q-block">
                 <label className="app-q-label-major">WHAT ARE YOU DOING WITH IT?</label>
                 <div className="app-choice-cards">
@@ -614,7 +629,6 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                 </div>
               </div>
 
-              {/* APPLY / TEST flow */}
               {(applyChoice === 'apply' || applyChoice === 'test') && (
                 <>
                   <div className="app-q-block">
@@ -641,7 +655,7 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                     </div>
                   )}
 
-                  {/* WHEN chips — stores in commitment field */}
+                  {/* WHEN chips — stored in commitment field (NOT review_date) */}
                   <div className="app-q-block">
                     <label className="app-q-label">WHEN ARE YOU PUTTING THIS INTO PLAY?</label>
                     <div className="app-chips">
@@ -668,11 +682,7 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                   </div>
 
                   <div className="app-action-row">
-                    <button
-                      className="app-primary-btn"
-                      onClick={handleCommit}
-                      disabled={isSaving}
-                    >
+                    <button className="app-primary-btn" onClick={handleCommit} disabled={isSaving}>
                       {isSaving ? <Loader2 size={13} className="spin" /> : <Lock size={13} />}
                       {isSaving ? 'Saving…' : 'LOCK IT IN →'}
                     </button>
@@ -681,16 +691,11 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                 </>
               )}
 
-              {/* SKIP flow */}
               {applyChoice === 'skip' && (
                 <div className="app-skip-flow">
                   <p className="app-skip-label">Skipping this one. Noted.</p>
                   <div className="app-action-row">
-                    <button
-                      className="app-secondary-btn"
-                      onClick={handleSkip}
-                      disabled={isSaving}
-                    >
+                    <button className="app-secondary-btn" onClick={handleSkip} disabled={isSaving}>
                       {isSaving ? <Loader2 size={13} className="spin" /> : null}
                       {isSaving ? 'Saving…' : 'SKIP →'}
                     </button>
@@ -699,7 +704,6 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                 </div>
               )}
 
-              {/* Edit-mode save */}
               {mode === 'edit' && applyChoice !== 'skip' && applyChoice !== null && (
                 <div className="app-action-row app-edit-save-row">
                   <button className="app-secondary-btn" onClick={handleEditSave} disabled={isSaving}>
@@ -712,10 +716,25 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
             </div>
           )}
 
-          {/* ═══════════ EXECUTE STAGE ═══════════ */}
+          {/* ═══════════ EXECUTE ═══════════ */}
           {currentStageKey === 'execute' && (
             <div className="app-stage-content">
-              {/* Mission display */}
+              {/* In-progress persistent microcopy */}
+              {mode !== 'edit' && (
+                <div className="app-inprogress-msg">
+                  {pickMessage(MSGS_IN_PROGRESS, lessonId)}
+                </div>
+              )}
+
+              {/* THE ONE THING — shown above mission if exists */}
+              {keyConcepts && (
+                <div className="app-execute-takeaway">
+                  <span className="app-execute-takeaway-label">THE ONE THING</span>
+                  <span className="app-execute-takeaway-value">"{keyConcepts}"</span>
+                </div>
+              )}
+
+              {/* Mission + Deadline display */}
               {(mission || commitment) && (
                 <div className="app-mission-display">
                   {mission && (
@@ -735,18 +754,11 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
 
               {execStep === 'cta' && (
                 <div className="app-execute-cta">
-                  <button
-                    className="app-execute-btn app-execute-did-it"
-                    onClick={() => setExecStep('result')}
-                  >
+                  <button className="app-execute-btn app-execute-did-it" onClick={() => setExecStep('result')}>
                     <Check size={16} strokeWidth={2.5} />
                     I DID IT
                   </button>
-                  <button
-                    className="app-execute-btn app-execute-didnt"
-                    onClick={handleDidntExecute}
-                    disabled={isSaving}
-                  >
+                  <button className="app-execute-btn app-execute-didnt" onClick={handleDidntExecute} disabled={isSaving}>
                     {isSaving ? <Loader2 size={14} className="spin" /> : null}
                     DIDN'T EXECUTE
                   </button>
@@ -768,19 +780,11 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                   </div>
 
                   <div className="app-result-btns">
-                    <button
-                      className="app-result-btn app-result-worked"
-                      onClick={handleResultWorked}
-                      disabled={isSaving}
-                    >
+                    <button className="app-result-btn app-result-worked" onClick={handleResultWorked} disabled={isSaving}>
                       {isSaving ? <Loader2 size={14} className="spin" /> : <Check size={14} />}
                       WORKED
                     </button>
-                    <button
-                      className="app-result-btn app-result-failed"
-                      onClick={handleResultFailed}
-                      disabled={isSaving}
-                    >
+                    <button className="app-result-btn app-result-failed" onClick={handleResultFailed} disabled={isSaving}>
                       DIDN'T WORK
                     </button>
                   </div>
@@ -788,7 +792,6 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                 </>
               )}
 
-              {/* Edit-mode save in execute */}
               {mode === 'edit' && (
                 <div className="app-action-row app-edit-save-row">
                   <button className="app-secondary-btn" onClick={handleEditSave} disabled={isSaving}>
@@ -801,10 +804,9 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
             </div>
           )}
 
-          {/* ═══════════ REFLECT STAGE ═══════════ */}
+          {/* ═══════════ REFLECT ═══════════ */}
           {currentStageKey === 'reflect' && (
             <div className="app-stage-content">
-              {/* Result summary */}
               {outcome && (
                 <div className={`app-result-summary ${status === 'Failed' ? 'result-summary-failed' : 'result-summary-done'}`}>
                   <div className="result-summary-row">
@@ -830,7 +832,7 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                 />
               </div>
 
-              {/* Review date chips — uses review_date field (NOT commitment/deadline) */}
+              {/* Review date chips — uses review_date field ONLY (separate from commitment/deadline) */}
               <div className="app-q-block">
                 <label className="app-q-label">REVISIT THIS?</label>
                 <div className="app-chips">
@@ -840,10 +842,10 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
                       className={`app-chip ${reviewChip === chip ? 'chip-active' : ''}`}
                       onClick={() => handleReviewChip(chip)}
                     >
-                      {chip === 'none'    ? 'No review' :
-                       chip === '3-days' ? '3 days' :
-                       chip === '1-week' ? '1 week' :
-                       chip === '1-month'? '1 month' : 'Pick date'}
+                      {chip === 'none'     ? 'No review' :
+                       chip === '3-days'   ? '3 days'    :
+                       chip === '1-week'   ? '1 week'    :
+                       chip === '1-month'  ? '1 month'   : 'Pick date'}
                     </button>
                   ))}
                 </div>
@@ -859,11 +861,7 @@ export const ApplicationEngine: React.FC<ApplicationEngineProps> = ({
 
               {mode !== 'edit' ? (
                 <div className="app-action-row">
-                  <button
-                    className="app-primary-btn app-close-loop-btn"
-                    onClick={handleCloseLoop}
-                    disabled={isSaving}
-                  >
+                  <button className="app-primary-btn app-close-loop-btn" onClick={handleCloseLoop} disabled={isSaving}>
                     {isSaving ? <Loader2 size={13} className="spin" /> : <Check size={13} strokeWidth={2.5} />}
                     {isSaving ? 'Saving…' : 'CLOSE THE LOOP →'}
                   </button>

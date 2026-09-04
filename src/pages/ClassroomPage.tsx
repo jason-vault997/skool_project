@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
-  Check, Circle, PlayCircle, Menu, X, RotateCcw, CalendarClock,
+  Check, Circle, Menu, X, RotateCcw, CalendarClock,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth/AuthContext';
 import { YouTubePlayer } from '../components/classroom/YouTubePlayer';
@@ -256,11 +256,11 @@ const LearningSidebar: React.FC<SidebarProps> = ({
               {modExpanded && (
                 <ul className="sidebar-lessons-list">
                   {mod.lessons.map(lesson => {
-                    const row        = progressMap.get(lesson.id);
-                    const isActive   = selectedLessonId === lesson.id;
-                    const done       = row?.completed === true || (row?.progress_pct ?? 0) >= 100;
-                    const inProg     = !done && (row?.progress_pct ?? 0) > 0;
-                    const appStatus  = appIndicatorMap.get(lesson.id) ?? 'none';
+                    const row       = progressMap.get(lesson.id);
+                    const isActive  = selectedLessonId === lesson.id;
+                    const done      = row?.completed === true || (row?.progress_pct ?? 0) >= 100;
+                    const inProg    = !done && (row?.progress_pct ?? 0) > 0;
+                    const appStatus = appIndicatorMap.get(lesson.id) ?? 'none';
 
                     return (
                       <li key={lesson.id}>
@@ -269,25 +269,27 @@ const LearningSidebar: React.FC<SidebarProps> = ({
                           onClick={() => onSelectLesson(lesson, mod)}
                           title={lesson.title}
                         >
-                          {/* Watch status icon */}
-                          <span className={`sidebar-lesson-icon ${done ? 'icon-done' : inProg ? 'icon-progress' : 'icon-empty'}`}>
-                            {done ? (
-                              <Check size={12} strokeWidth={2.5} />
-                            ) : inProg ? (
-                              <PlayCircle size={12} />
-                            ) : (
-                              <Circle size={12} strokeWidth={1.5} />
-                            )}
-                          </span>
-
-                          <span className="sidebar-lesson-label">{lesson.title}</span>
-
-                          {/* Application indicator dot */}
-                          {appStatus !== 'none' && (
+                          {/* Left: application status dot */}
+                          {appStatus !== 'none' ? (
                             <span
                               className={`sidebar-app-dot dot-${appStatus}`}
                               title={`Application: ${appStatus}`}
                             />
+                          ) : (
+                            <span className="sidebar-app-dot-placeholder" />
+                          )}
+
+                          {/* Lesson title */}
+                          <span className="sidebar-lesson-label">{lesson.title}</span>
+
+                          {/* Right: prominent green check for completed lessons */}
+                          {done && (
+                            <span className="sidebar-done-check" title="Watched">
+                              <Check size={11} strokeWidth={3} />
+                            </span>
+                          )}
+                          {inProg && !done && (
+                            <span className="sidebar-inprog-dot" title="In progress" />
                           )}
                         </button>
                       </li>
@@ -509,6 +511,7 @@ const LearningInterface: React.FC<LearningInterfaceProps> = ({
         <div className="learning-main">
           {activeLesson ? (
             <LessonPanel
+              key={activeLesson.lesson.id}
               active={activeLesson}
               progressRow={progressRow}
               userId={userId}
