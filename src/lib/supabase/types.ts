@@ -340,3 +340,161 @@ export interface WeeklyReview {
   completed_at: string | null;
 }
 
+// ---- Phase 9–12: Calendar + Business Restructuring ----
+
+/**
+ * operator_config — single row per user.
+ * Stores operating period config, acquisition targets, job application count,
+ * and the canonical user timezone for all Calendar date calculations.
+ */
+export interface OperatorConfig {
+  user_id: string;
+  /** IANA timezone identifier (e.g. 'Asia/Kolkata'). Set from browser on first use. */
+  timezone: string;
+  /** 'YYYY-MM-DD' — the date the operator designated as Day 1. */
+  operating_start_date: string | null;
+  /** 'YYYY-MM-DD' — optional operating end date. */
+  operating_end_date: string | null;
+  // Primary acquisition engine targets (units/day, null = no target set)
+  acquisition_repost_target: number | null;
+  acquisition_content_target: number | null;
+  acquisition_brand_target: number | null;
+  // Delegated acquisition targets
+  acquisition_wa_target: number | null;
+  acquisition_linkedin_target: number | null;
+  acquisition_repost_d_target: number | null;
+  /** Cumulative job application count (simple counter). */
+  job_application_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type OperatorConfigUpsert = Omit<OperatorConfig, 'created_at' | 'updated_at'> & {
+  created_at?: string;
+  updated_at?: string;
+};
+
+/**
+ * operating_days — one row per operating date per user.
+ * Canonical operating-day state. Streak and day-number are derived from this table.
+ * 'date' is a local calendar date in the user's configured timezone.
+ */
+export type OperatingDayStatus = 'not_started' | 'started' | 'completed' | 'missed';
+
+export interface OperatingDay {
+  id: string;
+  user_id: string;
+  /** 'YYYY-MM-DD' in user's timezone — the operating date */
+  date: string;
+  status: OperatingDayStatus;
+  /** Cached sum of work minutes for this day. Updated on check-out / session end. */
+  total_work_minutes: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type OperatingDayInsert = Omit<OperatingDay, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+/**
+ * work_sessions — individual check-in to check-out intervals.
+ * Supports multiple sessions per day, breaks, and overnight sessions.
+ * ended_at = null means the session is currently active.
+ * work_minutes = null means the session is not yet closed.
+ */
+export interface WorkSession {
+  id: string;
+  user_id: string;
+  /** 'YYYY-MM-DD' — attributed to the local date on which check-in occurred */
+  operating_date: string;
+  started_at: string;  // ISO timestamptz
+  ended_at: string | null;
+  /** Denormalized cache: total break minutes in this session. Source of truth = work_breaks. */
+  break_minutes: number;
+  /** Computed on check-out: floor((ended_at - started_at - break_minutes) / 60) */
+  work_minutes: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type WorkSessionInsert = Omit<WorkSession, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+/**
+ * work_breaks — individual break intervals within a work session.
+ * Source of truth for break duration. ended_at = null = currently on break.
+ * Canon: actual_work = (session.ended_at - session.started_at) - SUM(break.ended_at - break.started_at)
+ */
+export interface WorkBreak {
+  id: string;
+  work_session_id: string;
+  user_id: string;
+  started_at: string;  // ISO timestamptz
+  ended_at: string | null;
+  created_at: string;
+}
+
+export type WorkBreakInsert = Omit<WorkBreak, 'id' | 'created_at'> & {
+  id?: string;
+  created_at?: string;
+};
+
+/**
+ * daily_execution_items — up to 3 completed items per operating day.
+ * slot: 1 | 2 | 3
+ */
+export interface DailyExecutionItem {
+  id: string;
+  user_id: string;
+  /** 'YYYY-MM-DD' local operating date */
+  date: string;
+  slot: 1 | 2 | 3;
+  text: string;
+  completed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type DailyExecutionItemInsert = Omit<DailyExecutionItem, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+/**
+ * acquisition_log — daily execution boolean per acquisition engine.
+ * engine values: 'repost' | 'content' | 'brand' | 'wa_dms' | 'linkedin' | 'repost_d'
+ * Primary engines: repost, content, brand
+ * Delegated engines: wa_dms, linkedin, repost_d
+ */
+export type AcquisitionEngine =
+  | 'repost'
+  | 'content'
+  | 'brand'
+  | 'wa_dms'
+  | 'linkedin'
+  | 'repost_d';
+
+export interface AcquisitionLog {
+  id: string;
+  user_id: string;
+  /** 'YYYY-MM-DD' local date */
+  date: string;
+  engine: AcquisitionEngine;
+  executed: boolean;
+  created_at: string;
+}
+
+export type AcquisitionLogInsert = Omit<AcquisitionLog, 'id' | 'created_at'> & {
+  id?: string;
+  created_at?: string;
+};
+
+
