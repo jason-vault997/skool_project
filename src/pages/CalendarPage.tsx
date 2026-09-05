@@ -16,7 +16,7 @@
 // ============================================================
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Settings, Check } from 'lucide-react';
+import { Settings, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../lib/auth/AuthContext';
 import { getOrCreateOperatorConfig, setOperatingStartDate } from '../lib/data/operatorConfig';
 import {
@@ -110,6 +110,13 @@ export const CalendarPage: React.FC = () => {
     { slot: 3, text: '', completed: false },
   ]);
   // execSaving: reserved for future use (no visible loading state needed for exec items)
+
+  // Mini-calendar state
+  const now0 = new Date();
+  const [calViewYear, setCalViewYear]   = useState(now0.getFullYear());
+  const [calViewMonth, setCalViewMonth] = useState(now0.getMonth()); // 0-indexed
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [miniDayMap, setMiniDayMap]     = useState<Map<string, string>>(new Map()); // date → status
 
   // Live timer
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -340,6 +347,52 @@ export const CalendarPage: React.FC = () => {
       );
     }
   };
+
+  // ── Mini calendar data ─────────────────────────────────────
+
+  // Load operating_days for the currently viewed month whenever calViewYear/calViewMonth changes
+  useEffect(() => {
+    if (!user) return;
+    const y = calViewYear;
+    const m = calViewMonth;
+    const firstDay = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+    const lastDay  = new Date(y, m + 1, 0);
+    const lastStr  = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`;
+    getOperatingDaysInRange(user.id, firstDay, lastStr).then(days => {
+      setMiniDayMap(new Map(days.map(d => [d.date, d.status])));
+    });
+  }, [user, calViewYear, calViewMonth]);
+
+  function buildMiniCalGrid(year: number, month: number): (string | null)[][] {
+    // Returns 6-week grid (some cells null = padding)
+    const firstOfMonth = new Date(year, month, 1);
+    const totalDays    = new Date(year, month + 1, 0).getDate();
+    // Monday-first: getDay() 0=Sun → shift
+    let startDow = firstOfMonth.getDay(); // 0=Sun
+    startDow = startDow === 0 ? 6 : startDow - 1; // Mon=0
+    const cells: (string | null)[] = [];
+    for (let i = 0; i < startDow; i++) cells.push(null);
+    for (let d = 1; d <= totalDays; d++) {
+      cells.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+    }
+    while (cells.length % 7 !== 0) cells.push(null);
+    const rows: (string | null)[][] = [];
+    for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
+    return rows;
+  }
+
+  const miniCalRows = buildMiniCalGrid(calViewYear, calViewMonth);
+  const miniCalMonthLabel = new Date(calViewYear, calViewMonth, 1)
+    .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  function navMonth(delta: 1 | -1) {
+    let m = calViewMonth + delta;
+    let y = calViewYear;
+    if (m > 11) { m = 0; y++; }
+    if (m < 0)  { m = 11; y--; }
+    setCalViewMonth(m);
+    setCalViewYear(y);
+  }
 
   // ── Computed values ────────────────────────────────────────
 
@@ -609,6 +662,74 @@ export const CalendarPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ── MINI CALENDAR ── */}
+      <div className="mini-cal-card skool-card">
+        <div className="mini-cal-nav">
+          <button className="mini-cal-nav-btn" onClick={() => navMonth(-1)}>
+            <ChevronLeft size={14} />
+          </button>
+          <span className="mini-cal-month-title">{miniCalMonthLabel.toUpperCase()}</span>
+          <button className="mini-cal-nav-btn" onClick={() => navMonth(1)}>
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
+        <div className="mini-cal-grid">
+          {/* Day-of-week headers */}
+          {['M','T','W','T','F','S','S'].map((d, i) => (
+            <span key={i} className="mini-cal-dow">{d}</span>
+          ))}
+
+          {miniCalRows.map((row, ri) =>
+            row.map((dateStr, ci) => {
+              if (!dateStr) {
+                return <span key={`${ri}-${ci}`} className="mini-cal-cell mini-cal-empty" />;
+              }
+              const status = miniDayMap.get(dateStr) ?? 'not_started';
+              const isToday = dateStr === todayLocal;
+              const isFuture = dateStr > todayLocal;
+              const isSelected = dateStr === selectedDate;
+              const isWorked = status === 'started' || status === 'completed';
+              const isMissed = !isFuture && !isWorked && !!startDate && dateStr >= startDate && dateStr <= todayLocal;
+              const dayNum = parseInt(dateStr.split('-')[2]);
+
+              return (
+                <button
+                  key={dateStr}
+                  className={[
+                    'mini-cal-cell',
+                    isToday    ? 'mini-cal-today'   : '',
+                    isWorked   ? 'mini-cal-worked'  : '',
+                    isMissed   ? 'mini-cal-missed'  : '',
+                    isFuture   ? 'mini-cal-future'  : '',
+                    isSelected ? 'mini-cal-selected': '',
+                  ].join(' ').trim()}
+                  onClick={() => setSelectedDate(isSelected ? null : dateStr)}
+                >
+                  {dayNum}
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {/* Selected day detail */}
+        {selectedDate && (() => {
+          const selStatus = miniDayMap.get(selectedDate) ?? 'not_started';
+          const selWorked = selStatus === 'started' || selStatus === 'completed';
+          const selDateObj = new Date(selectedDate + 'T00:00:00');
+          const selLabel = selDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+          return (
+            <div className="mini-cal-detail">
+              <span className="mini-cal-detail-date">{selLabel}</span>
+              <span className={`mini-cal-detail-status ${selWorked ? 'detail-worked' : 'detail-missed'}`}>
+                {selWorked ? 'Worked' : selectedDate > todayLocal ? 'Future' : 'No session'}
+              </span>
+            </div>
+          );
+        })()}
+      </div>
 
     </div>
   );

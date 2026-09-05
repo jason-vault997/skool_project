@@ -1,16 +1,18 @@
 /* ============================================================
-   BUILD100 — Phase 10: Business Page Styles (Reworked)
+   BUILD100 — Business Page CSS
+   ORIGINAL from commit 563b216 (Phase 8), preserved exactly.
+   Additions marked with "Phase 9 addition" comments only.
    ============================================================ */
 
+/* ── Business Hero ── */
 .business-page {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
 }
 
-/* ── Hero ── */
 .business-hero-card {
-  padding: var(--space-7) var(--space-7) var(--space-6);
+  padding: var(--space-7);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -24,22 +26,23 @@
 
 .hero-badge {
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .hero-milestone-pill {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 100px;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
   padding: 4px 12px;
   font-size: 11px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.85);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .hero-headline-group {
@@ -49,17 +52,18 @@
 }
 
 .hero-main-title {
-  font-size: 48px;
+  font-size: 52px;
   font-weight: 900;
-  color: #fff;
-  letter-spacing: -0.03em;
+  color: #ffffff;
+  letter-spacing: -0.04em;
   line-height: 1;
 }
 
 .hero-subtitle {
   font-size: 13px;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.45);
   font-style: italic;
+  font-weight: 500;
 }
 
 .client-progress-block {
@@ -70,7 +74,7 @@
 
 .client-progress-header {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
 }
 
@@ -81,9 +85,9 @@
 }
 
 .current-num {
-  font-size: 52px;
+  font-size: 64px;
   font-weight: 900;
-  color: #fff;
+  color: #ffffff;
   letter-spacing: -0.04em;
   line-height: 1;
 }
@@ -91,56 +95,60 @@
 .target-num {
   font-size: 16px;
   font-weight: 700;
-  color: rgba(255,255,255,0.5);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.35);
 }
 
-.add-client-btn {
+/* Phase 9 addition: hero right — badge + add client button stacked */
+.hero-right-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.progress-pct-badge {
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--brand-lime);
+}
+
+/* Phase 9 addition: + Add Client button — small, fits the dark hero */
+.add-client-hero-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: var(--brand-lime);
-  color: var(--brand-green-dark);
-  border: none;
-  border-radius: var(--radius-md);
-  padding: 9px 18px;
-  font-size: 13px;
+  gap: 5px;
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm);
+  padding: 5px 11px;
   cursor: pointer;
   transition: all var(--transition-fast);
-  letter-spacing: 0.02em;
 }
 
-.add-client-btn:hover:not(:disabled) {
-  background: var(--brand-lime-hover);
-  transform: translateY(-1px);
+.add-client-hero-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.35);
 }
 
-.add-client-btn:disabled { opacity: 0.6; cursor: default; }
+.add-client-hero-btn:disabled { opacity: 0.5; cursor: default; }
 
-.add-client-success {
-  background: var(--accent-emerald) !important;
+.add-client-flash {
+  background: rgba(74,222,128,0.25) !important;
+  border-color: rgba(74,222,128,0.5) !important;
   color: #fff !important;
 }
 
-.milestone-sub {
-  font-size: 12px;
-  color: rgba(255,255,255,0.5);
-  margin-top: 4px;
-}
-
-/* ── Metrics Grid ── */
+/* Metrics Summary Grid */
 .metrics-summary-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: var(--space-3);
-}
-
-@media (max-width: 900px) {
-  .metrics-summary-grid { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 600px) {
-  .metrics-summary-grid { grid-template-columns: repeat(2, 1fr); }
+  gap: var(--space-4);
 }
 
 .biz-stat-box {
@@ -151,58 +159,102 @@
 }
 
 .stat-card-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
 }
 
 .stat-card-val {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   font-weight: 800;
+  letter-spacing: -0.03em;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
-  line-height: 1;
+  line-height: 1.15;
 }
 
-.highlight-client { color: var(--brand-green-dark); }
+.stat-card-val.highlight-client {
+  color: var(--brand-green);
+}
 
 .stat-card-trend {
   font-size: 11px;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
-/* ── Two-column layout ── */
+/* 2 Column Content */
 .business-content-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-5);
+  grid-template-columns: 360px 1fr;
+  gap: var(--space-6);
   align-items: start;
 }
 
-@media (max-width: 768px) {
-  .business-content-grid { grid-template-columns: 1fr; }
+.biz-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
 }
 
-.biz-left-col,
 .biz-right-col {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
 }
 
-/* ── Acquisition Card ── */
+/* Milestone Card */
+.milestone-card {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.milestone-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.milestone-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.milestone-title {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.milestone-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.milestone-pct {
+  color: var(--brand-green-dark);
+}
+
+.milestone-note {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+/* Acquisition Card */
 .acquisition-card {
+  padding: var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-5);
-}
-
-.acq-delegated {
-  border-left: 3px solid var(--border-dark);
-  opacity: 0.92;
 }
 
 .acquisition-header {
@@ -211,45 +263,46 @@
   justify-content: space-between;
 }
 
-.acq-today-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+.channel-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #c13584;
 }
 
 .channel-items-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .channel-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-default);
+  padding: var(--space-3);
   background: var(--bg-subtle);
-  transition: all var(--transition-fast);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
 }
 
-.channel-item-btn {
+/* Phase 9 addition: make channel items interactive */
+.channel-item-clickable {
   cursor: pointer;
-  width: 100%;
-  text-align: left;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+  user-select: none;
 }
 
-.channel-item-btn:hover:not(:disabled) {
-  border-color: var(--brand-green-dark);
-  background: rgba(0, 100, 0, 0.04);
+.channel-item-clickable:hover {
+  border-color: var(--border-dark);
+  background: var(--bg-card);
 }
 
-.channel-done {
-  border-color: var(--accent-emerald);
-  background: rgba(74, 222, 128, 0.06);
+/* Phase 9 addition: delegated items — slightly muted */
+.channel-item-delegated {
+  opacity: 0.85;
 }
 
 .channel-label-group {
@@ -259,8 +312,8 @@
 }
 
 .channel-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -269,37 +322,41 @@
   color: var(--text-muted);
 }
 
-.channel-exec-badge {
+.channel-status-badge {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  background: #ffffff;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+
+.channel-status-badge.success {
+  background: var(--accent-emerald-soft);
+  color: var(--accent-emerald);
+  border-color: rgba(16, 185, 129, 0.2);
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  padding: 3px 8px;
 }
 
-.exec-done {
-  background: rgba(74, 222, 128, 0.12);
-  color: var(--accent-emerald);
-}
-
-.exec-pending {
-  background: var(--bg-subtle);
+/* Phase 9 addition: pending badge */
+.channel-status-badge.pending {
   color: var(--text-muted);
-  border: 1px dashed var(--border-default);
+  border-style: dashed;
 }
 
-/* Acquisition History Grid */
-.acq-history {
-  border-top: 1px solid var(--border-default);
+/* Phase 9 addition: 7-day acquisition history strip */
+.acq-hist-strip {
+  border-top: 1px solid var(--border-light);
   padding-top: var(--space-3);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
-.acq-history-label {
+.acq-hist-strip-label {
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -307,254 +364,283 @@
   text-transform: uppercase;
 }
 
-.acq-history-grid {
+.acq-hist-dots {
   display: flex;
-  gap: 0;
+  gap: 4px;
 }
 
-.acq-history-engines {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding-top: 18px;
-  padding-right: var(--space-3);
-  min-width: 52px;
-}
-
-.acq-engine-abbr {
-  font-size: 9px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.acq-history-col {
+.acq-hist-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 3px;
   flex: 1;
 }
 
-.acq-hist-date {
+.acq-hist-dow {
   font-size: 9px;
-  font-weight: 600;
   color: var(--text-muted);
+  font-weight: 600;
   text-transform: uppercase;
 }
 
-.acq-hist-dot {
-  width: 10px;
-  height: 10px;
+.acq-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 2px;
 }
 
-.acq-dot-done { background: var(--accent-emerald); }
-.acq-dot-miss { background: var(--border-default); }
+.acq-dot-on  { background: var(--accent-emerald); }
+.acq-dot-off { background: var(--border-default); }
 
-/* ── Backup / Job Counter ── */
-.backup-card {
-  padding: var(--space-4) var(--space-5);
+/* Phase 9 addition: delegated section */
+.delegated-section {
+  border-top: 1px solid var(--border-light);
+  padding-top: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
+}
+
+.delegated-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Backup Card */
+.backup-card {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-card);
 }
 
 .backup-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
 }
 
 .backup-icon-title {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 6px;
 }
 
-.backup-icon { color: var(--text-muted); }
+.backup-icon {
+  color: var(--text-muted);
+}
 
 .backup-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-.backup-value {
   font-size: 11px;
-  color: var(--text-muted);
+  font-weight: 700;
+  color: var(--text-secondary);
 }
 
-.job-counter-row {
+/* Phase 9 addition: inline job counter replacing static "Safety net only" value */
+.backup-counter {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 6px;
 }
 
-.job-counter-btn {
-  width: 30px;
-  height: 30px;
+.job-btn {
+  width: 22px;
+  height: 22px;
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
+  border-radius: 3px;
   background: var(--bg-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all var(--transition-fast);
-  color: var(--text-primary);
+  color: var(--text-secondary);
 }
 
-.job-counter-btn:hover:not(:disabled) {
+.job-btn:hover:not(:disabled) {
   border-color: var(--border-dark);
   background: var(--bg-card);
 }
 
-.job-counter-btn:disabled { opacity: 0.4; cursor: default; }
+.job-btn:disabled { opacity: 0.35; cursor: default; }
 
-.job-counter-val {
-  font-size: 28px;
+.backup-value {
+  font-size: var(--font-size-sm);
   font-weight: 800;
   color: var(--text-primary);
-  min-width: 40px;
+  min-width: 20px;
   text-align: center;
-  letter-spacing: -0.02em;
 }
 
-.job-counter-label {
-  font-size: 12px;
+.backup-note {
+  font-size: 11px;
   color: var(--text-muted);
 }
 
-/* ── Build Log ── */
+/* Build Log Journal */
 .build-log-card {
-  padding: var(--space-5);
+  padding: var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .build-log-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
 }
 
 .build-log-title {
-  font-size: 16px;
+  font-size: var(--font-size-xl);
   font-weight: 800;
+  letter-spacing: -0.03em;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
 }
 
 .log-badge {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
   background: var(--bg-subtle);
-  border: 1px solid var(--border-default);
-  border-radius: 100px;
-  padding: 2px 8px;
-  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
 }
 
 .build-entries-list {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  max-height: 520px;
-  overflow-y: auto;
+  gap: var(--space-2);
 }
 
 .build-entry-row {
-  display: grid;
-  grid-template-columns: 52px 1fr 48px;
+  display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-2);
-  border-bottom: 1px solid var(--border-default);
-  transition: background var(--transition-fast);
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  transition: all var(--transition-fast);
 }
 
-.build-entry-row:hover { background: var(--bg-subtle); }
+.build-entry-row:hover {
+  border-color: var(--border-dark);
+}
+
+.build-entry-row.worked-day {
+  border-left: 3px solid var(--brand-green);
+}
+
+.build-entry-row.rest-day {
+  border-left: 3px solid var(--border-dark);
+  opacity: 0.75;
+}
 
 .entry-left {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
+  width: 90px;
 }
 
 .entry-day {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
+  color: var(--text-primary);
 }
 
 .entry-date {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
 .entry-center {
   display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  padding: 0 var(--space-4);
 }
 
-.entry-metric {
-  font-size: 11px;
-  font-weight: 600;
+.entry-status {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.status-worked { color: var(--text-primary); }
+.status-rest   { color: var(--text-muted); }
+
+.entry-notes {
+  font-size: 12px;
   color: var(--text-secondary);
+}
+
+/* Phase 9 addition: inline metric tags in build log */
+.entry-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.entry-tag {
+  font-size: 10px;
+  font-weight: 600;
   background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
   border-radius: 3px;
   padding: 1px 6px;
-  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
 }
 
-.entry-metric-client {
+.tag-client {
   color: var(--accent-emerald);
-  border-color: rgba(74,222,128,0.3);
-  background: rgba(74,222,128,0.06);
-}
-
-.entry-metric-off {
-  color: var(--text-muted);
-  border-color: transparent;
-  background: transparent;
+  border-color: rgba(16,185,129,0.25);
+  background: rgba(16,185,129,0.05);
 }
 
 .entry-right {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
 }
 
 .entry-hour-badge {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--brand-green-dark);
-  background: rgba(0, 100, 0, 0.06);
-  border-radius: 3px;
-  padding: 2px 6px;
-}
-
-.entry-hour-badge-partial {
-  color: var(--text-secondary);
-  background: var(--bg-subtle);
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+  background: var(--brand-lime-soft);
+  color: var(--brand-lime-text);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
 }
 
 .entry-off-badge {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  background: var(--bg-subtle);
   color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
 }
 
 /* Shared section label */
 .section-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .metrics-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .business-content-grid {
+    grid-template-columns: 1fr;
+  }
 }

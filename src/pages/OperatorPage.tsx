@@ -51,20 +51,10 @@ function buildWatchSignals(intel: OperatorIntelligence): WatchSignal[] {
     });
   }
 
-  // 2. Goal at critical/at-risk
-  if (intel.goal_risk.critical_count > 0) {
-    signals.push({
-      label: 'GOAL',
-      message: `${intel.goal_risk.critical_count} goal${intel.goal_risk.critical_count > 1 ? 's are' : ' is'} critical — pace is significantly behind.`,
-      severity: 'critical',
-    });
-  } else if (intel.goal_risk.at_risk_count > 0) {
-    signals.push({
-      label: 'GOAL',
-      message: `${intel.goal_risk.at_risk_count} goal${intel.goal_risk.at_risk_count > 1 ? 's are' : ' is'} at risk — review pacing.`,
-      severity: 'warning',
-    });
-  }
+  // 2. Goal signals SUPPRESSED — Goals UI was removed from Business page.
+  //    Until there is a user-facing way to manage goals, these signals
+  //    must not appear in WATCH (user cannot act on them).
+  //    business_goals table is preserved in the DB but not surfaced here.
 
   // 3. Overdue backlog
   if (signals.length < 2 && intel.backlog.overdue_count > 0) {
