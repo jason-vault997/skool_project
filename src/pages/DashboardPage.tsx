@@ -5,19 +5,24 @@ import { CockyMessageCard } from '../components/CockyMessageCard';
 import { ExecutionVsLearningCard } from '../components/ExecutionVsLearningCard';
 import { TodayBusinessCard } from '../components/TodayBusinessCard';
 import { ProgressBar } from '../components/ProgressBar';
+
 import { useAuth } from '../lib/auth/AuthContext';
 import { getAllModulesWithProgress } from '../lib/data/modules';
 import { getMetricsForToday, getAllTimeMetrics } from '../lib/data/businessMetrics';
 import { getUpcomingSession } from '../lib/data/sessions';
 import { getApplicationStats, ApplicationStats } from '../lib/data/applicationRecords';
+import { getTopGoal, getGoalCurrentValue } from '../lib/data/businessGoals';
+import { getLastCompletedReview } from '../lib/data/weeklyReviews';
+import { calculateGoalProgress, TRACK_SIGNAL_LABELS } from '../lib/business/goalProgress';
 import {
   sampleCheckInData,
   sampleCockyMessage,
   sampleSessionData,
 } from '../data/sampleData';
-import type { Session, ModuleWithProgress, BusinessMetric, AllTimeBusinessStats } from '../lib/supabase/types';
+import type { Session, ModuleWithProgress, BusinessMetric, AllTimeBusinessStats, BusinessGoal, WeeklyReview } from '../lib/supabase/types';
+import type { GoalProgressResult } from '../lib/business/goalProgress';
 import type { SessionInfo } from '../data/sampleData';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import './DashboardPage.css';
 
 interface DashboardPageProps {
@@ -70,6 +75,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
   const [upcomingSession, setUpcomingSession] = useState<Session | null>(null);
   const [appStats, setAppStats]               = useState<ApplicationStats | null>(null);
   const [dataLoading, setDataLoading]         = useState(true);
+  // Phase 6: top goal + last weekly review
+  const [topGoal, setTopGoal]                 = useState<BusinessGoal | null>(null);
+  const [topGoalProgress, setTopGoalProgress] = useState<GoalProgressResult | null>(null);
+  const [lastReview, setLastReview]           = useState<WeeklyReview | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -80,12 +89,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
       getAllTimeMetrics(user.id),
       getUpcomingSession(),
       getApplicationStats(user.id),
-    ]).then(([mods, today, allTime, upcoming, apps]) => {
+      getTopGoal(user.id),
+      getLastCompletedReview(user.id),
+    ]).then(async ([mods, today, allTime, upcoming, apps, goal, review]) => {
       setModules(mods);
       setTodayMetrics(today);
       setAllTimeStats(allTime);
       setUpcomingSession(upcoming);
       setAppStats(apps);
+      setLastReview(review);
+      if (goal) {
+        setTopGoal(goal);
+        const cv = await getGoalCurrentValue(user.id, goal);
+        setTopGoalProgress(calculateGoalProgress(goal, cv));
+      }
     }).finally(() => setDataLoading(false));
   }, [user]);
 
@@ -184,7 +201,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
 
             <div className="current-priority-badge">
               <span className="priority-label">CURRENT PRIORITY</span>
-              <span className="priority-val">SALES</span>
+              <span className="priority-val">
+                {topGoal ? topGoal.title : 'SALES'}
+              </span>
             </div>
           </div>
 
@@ -300,6 +319,49 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
           currentClients={totalClients}
           targetClients={100}
         />
+
+        {/* Phase 6: Top Active Goal card */}
+        {!dataLoading && topGoal && topGoalProgress && (
+          <div className="dash-goal-card skool-card">
+            <span className="dash-goal-header">TOP GOAL</span>
+            <p className="dash-goal-title">{topGoal.title}</p>
+            <div className="dash-goal-progress-row">
+              <ProgressBar
+                value={topGoalProgress.progressPct}
+                color={topGoalProgress.trackSignal === 'behind' ? 'var(--accent-rose)' :
+                       topGoalProgress.trackSignal === 'ahead'  ? 'var(--accent-emerald)' :
+                       'var(--brand-green-dark)'}
+                height={5}
+                showPercent={false}
+              />
+              <div className="dash-goal-meta">
+                <span className="dash-goal-pct">{topGoalProgress.progressPct}%</span>
+                {topGoalProgress.trackSignal !== 'no-data' && (
+                  <span className={`dash-goal-signal signal-${topGoalProgress.trackSignal}`}>
+                    {topGoalProgress.trackSignal === 'ahead'    ? <TrendingUp  size={10} /> :
+                     topGoalProgress.trackSignal === 'behind'   ? <TrendingDown size={10} /> :
+                     <Minus size={10} />}
+                    {TRACK_SIGNAL_LABELS[topGoalProgress.trackSignal]}
+                  </span>
+                )}
+              </div>
+            </div>
+            {topGoal.target_date && (
+              <span className="dash-goal-date">
+                Target: {new Date(topGoal.target_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Phase 6: This week's priority from last completed review */}
+        {!dataLoading && lastReview?.next_week_priority && (
+          <div className="dash-priority-card skool-card">
+            <span className="dash-priority-header">THIS WEEK'S PRIORITY</span>
+            <p className="dash-priority-text">"{lastReview.next_week_priority}"</p>
+            <span className="dash-priority-source">↑ From weekly review</span>
+          </div>
+        )}
 
         {/* Execution Pulse — application behavior stats */}
         {!dataLoading && appStats && (appStats.totalApplied > 0 || appStats.dueForReview > 0) && (

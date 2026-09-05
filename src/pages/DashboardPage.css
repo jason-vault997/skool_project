@@ -335,3 +335,99 @@
 
 .ep-stat.ep-stat-alert .ep-num { color: #92400e; }
 .ep-stat.ep-stat-alert .ep-lbl { color: #92400e; }
+
+/* ============================================================
+   Phase 6 — Dashboard Sidebar: Top Goal + Weekly Priority cards
+   ============================================================ */
+
+/* Top Goal card */
+.dash-goal-card {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.dash-goal-header {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dash-goal-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.dash-goal-progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dash-goal-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dash-goal-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.dash-goal-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dash-goal-signal.signal-ahead    { color: var(--accent-emerald); }
+.dash-goal-signal.signal-on-track { color: var(--accent-blue); }
+.dash-goal-signal.signal-behind   { color: var(--accent-rose); }
+
+.dash-goal-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* This Week's Priority card */
+.dash-priority-card {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-left: 3px solid var(--brand-lime);
+}
+
+.dash-priority-header {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-lime-text);
+}
+
+.dash-priority-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.dash-priority-source {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}

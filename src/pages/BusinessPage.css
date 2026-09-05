@@ -491,3 +491,54 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================================
+   Phase 6 — Business Tab Bar
+   ============================================================ */
+
+.biz-tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-bottom: 2px solid var(--border-light);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: 0 4px;
+  overflow-x: auto;
+}
+
+.biz-tab {
+  position: relative;
+  padding: 13px 22px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.biz-tab:hover:not(.biz-tab-active) {
+  color: var(--text-secondary);
+}
+
+.biz-tab-active {
+  color: var(--brand-green-dark);
+  border-bottom-color: var(--brand-green-dark);
+}
+
+/* ── Tab panel wrapper ─────────────────────────────────────── */
+.biz-tab-panel {
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  overflow: hidden;
+  /* Remove top radius since tab bar sits directly above */
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+

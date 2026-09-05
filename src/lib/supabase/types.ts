@@ -268,11 +268,75 @@ export type ApplicationRecordInsert = Omit<ApplicationRecord, 'id' | 'created_at
 /** UI-derived status of a lesson's application — used for sidebar indicators */
 export type AppIndicatorStatus = 'none' | 'started' | 'completed' | 'failed';
 
-// ---- UI-only types ----
-
 export interface LevelInfo {
   level: number;
   title: string;
   xpRequired: number;
   perks: string;
 }
+
+// ---- Phase 6: Business Operating System ----
+
+export type GoalType     = 'revenue' | 'clients' | 'leads' | 'sales_calls' | 'content' | 'hours' | 'custom';
+export type GoalStatus   = 'active' | 'completed' | 'paused' | 'abandoned';
+export type GoalPriority = 'critical' | 'high' | 'normal';
+export type ReviewStatus = 'draft' | 'completed';
+
+export interface BusinessGoal {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  goal_type: GoalType;
+  /** For connected types, this is NOT the source of truth — use calcConnectedCurrentValue() */
+  target_value: number;
+  /** Only used for 'custom' goal_type. Connected types compute this from business_metrics. */
+  current_value: number;
+  unit: string | null;
+  start_date: string | null;   // 'YYYY-MM-DD'
+  target_date: string | null;  // 'YYYY-MM-DD'
+  status: GoalStatus;
+  priority: GoalPriority;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
+export type BusinessGoalInsert = Omit<BusinessGoal, 'id' | 'created_at' | 'updated_at' | 'completed_at'> & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
+  completed_at?: string | null;
+};
+
+export interface WeeklyReview {
+  id: string;
+  user_id: string;
+  week_start: string;    // 'YYYY-MM-DD' — always Monday
+  week_end: string;      // 'YYYY-MM-DD' — always Sunday
+
+  // Auto-populated from business_metrics (read-only in UI)
+  leads: number;
+  sales_calls: number;
+  clients_closed: number;
+  revenue: number;
+  content_posted: number;
+  hours_worked: number;
+
+  // Operator debrief fields
+  biggest_win: string | null;
+  biggest_failure: string | null;
+  what_worked: string | null;
+  what_did_not_work: string | null;
+  key_learning: string | null;
+  bottleneck: string | null;
+  next_week_priority: string | null;
+  next_week_action: string | null;
+  notes: string | null;
+
+  status: ReviewStatus;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
