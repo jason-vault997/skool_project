@@ -8,6 +8,7 @@ import { CalendarPage } from './pages/CalendarPage';
 import { BusinessPage } from './pages/BusinessPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
+import { OperatorPage } from './pages/OperatorPage';
 import { AboutPage } from './pages/AboutPage';
 import './styles/global.css';
 
@@ -56,6 +57,8 @@ const AppShell: React.FC = () => {
         return <LeaderboardPage />;
       case 'analytics':
         return <AnalyticsPage />;
+      case 'operator':
+        return <OperatorPage onNavigateTab={(tab) => setActiveTab(tab as TabId)} />;
       case 'about':
         return <AboutPage />;
       default:

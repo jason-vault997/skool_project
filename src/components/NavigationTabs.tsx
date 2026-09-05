@@ -1,7 +1,7 @@
 import React from 'react';
 import './NavigationTabs.css';
 
-export type TabId = 'dashboard' | 'classroom' | 'calendar' | 'business' | 'leaderboard' | 'analytics' | 'about';
+export type TabId = 'dashboard' | 'classroom' | 'calendar' | 'business' | 'leaderboard' | 'analytics' | 'operator' | 'about';
 
 interface NavigationTabsProps {
   activeTab: TabId;
@@ -20,6 +20,7 @@ const TABS: TabItem[] = [
   { id: 'business',    label: 'Business' },
   { id: 'leaderboard', label: 'Leaderboard' },
   { id: 'analytics',   label: 'Analytics' },
+  { id: 'operator',    label: 'Operator' },
   { id: 'about',       label: 'About' }
 ];
 

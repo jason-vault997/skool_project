@@ -518,3 +518,108 @@
 
 .dm-link:hover { opacity: 0.7; }
 
+/* ── Phase 8: Dashboard Intelligence Strip ──────────────────── */
+
+.dash-intel-strip {
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border-left: 3px solid var(--brand-green);
+}
+
+.dis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dis-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dis-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand-green-dark);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: opacity 120ms;
+}
+.dis-link:hover { opacity: 0.7; }
+
+.dis-priority {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dis-badge {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.dis-badge-high { background: rgba(220,38,38,0.12); color: var(--accent-rose); }
+.dis-badge-medium { background: rgba(245,158,11,0.12); color: var(--accent-amber); }
+.dis-badge-low { background: rgba(59,130,246,0.1); color: var(--accent-blue); }
+
+.dis-priority-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dis-bottleneck {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.dis-bottleneck-label {
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  margin-right: 4px;
+}
+
+.dis-action {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.dis-overdue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: rgba(220,38,38,0.08);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+}
+.dis-overdue-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--accent-rose);
+  letter-spacing: 0.06em;
+}
+.dis-overdue-msg {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+

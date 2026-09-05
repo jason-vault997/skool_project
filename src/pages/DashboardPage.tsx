@@ -25,6 +25,8 @@ import type { GoalProgressResult } from '../lib/business/goalProgress';
 import type { SessionInfo } from '../data/sampleData';
 import { ArrowRight, TrendingUp, TrendingDown, Minus, BarChart2 } from 'lucide-react';
 import type { MomentumSummary } from '../lib/analytics/types';
+import { loadIntelligence } from '../lib/intelligence/intelligenceEngine';
+import type { OperatorIntelligence } from '../lib/intelligence/intelligenceTypes';
 import './DashboardPage.css';
 
 interface DashboardPageProps {
@@ -83,6 +85,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
   const [lastReview, setLastReview]           = useState<WeeklyReview | null>(null);
   // Phase 7: 30-day momentum for sidebar card
   const [momentum, setMomentum]               = useState<MomentumSummary | null>(null);
+  // Phase 8: operator intelligence strip (non-blocking, loads independently)
+  const [intel, setIntel]                     = useState<OperatorIntelligence | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -111,7 +115,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
 
     // Load momentum summary independently (lightweight, separate from main data)
     getMomentumSummary(user.id).then(setMomentum).catch(() => {/* ignore */});
+
+    // Load intelligence strip independently — non-blocking, does not affect main render
+    loadIntelligence(user.id).then(setIntel).catch(() => {/* ignore — strip simply won't show */});
   }, [user]);
+
 
   const trackProgress = computeTrackProgress(modules);
   const sessionToShow: SessionInfo = upcomingSession ? mapSessionToSessionInfo(upcomingSession) : sampleSessionData;
@@ -447,6 +455,35 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
               Full Analytics
               <ArrowRight size={11} />
             </button>
+          </div>
+        )}
+
+        {/* Phase 8: Intelligence Strip — additive widget linking to Operator tab */}
+        {intel && !intel.is_empty && (
+          <div className="dash-intel-strip skool-card">
+            <div className="dis-header">
+              <span className="dis-label">OPERATOR INTELLIGENCE</span>
+              <button className="dis-link" onClick={() => onNavigateTab('operator')}>
+                Open Operator <ArrowRight size={11} />
+              </button>
+            </div>
+            <div className="dis-priority">
+              <span className={`dis-badge dis-badge-${intel.priority.urgency}`}>
+                {intel.priority.urgency.toUpperCase()}
+              </span>
+              <span className="dis-priority-name">{intel.priority.priority.replace(/_/g, ' ')}</span>
+            </div>
+            <p className="dis-bottleneck">
+              <span className="dis-bottleneck-label">Bottleneck: </span>
+              {intel.bottleneck.bottleneck_type.replace(/_/g, ' ')}
+            </p>
+            <p className="dis-action">{intel.action.action_text.slice(0, 120)}{intel.action.action_text.length > 120 ? '…' : ''}</p>
+            {intel.commitments.overdue > 0 && (
+              <div className="dis-overdue">
+                <span className="dis-overdue-badge">{intel.commitments.overdue} OVERDUE</span>
+                <span className="dis-overdue-msg">commitment{intel.commitments.overdue > 1 ? 's' : ''} need action</span>
+              </div>
+            )}
           </div>
         )}
 
