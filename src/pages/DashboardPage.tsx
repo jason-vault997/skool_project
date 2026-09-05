@@ -14,6 +14,7 @@ import { getApplicationStats, ApplicationStats } from '../lib/data/applicationRe
 import { getTopGoal, getGoalCurrentValue } from '../lib/data/businessGoals';
 import { getLastCompletedReview } from '../lib/data/weeklyReviews';
 import { calculateGoalProgress, TRACK_SIGNAL_LABELS } from '../lib/business/goalProgress';
+import { getMomentumSummary } from '../lib/analytics/businessAnalytics';
 import {
   sampleCheckInData,
   sampleCockyMessage,
@@ -22,7 +23,8 @@ import {
 import type { Session, ModuleWithProgress, BusinessMetric, AllTimeBusinessStats, BusinessGoal, WeeklyReview } from '../lib/supabase/types';
 import type { GoalProgressResult } from '../lib/business/goalProgress';
 import type { SessionInfo } from '../data/sampleData';
-import { ArrowRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ArrowRight, TrendingUp, TrendingDown, Minus, BarChart2 } from 'lucide-react';
+import type { MomentumSummary } from '../lib/analytics/types';
 import './DashboardPage.css';
 
 interface DashboardPageProps {
@@ -79,6 +81,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
   const [topGoal, setTopGoal]                 = useState<BusinessGoal | null>(null);
   const [topGoalProgress, setTopGoalProgress] = useState<GoalProgressResult | null>(null);
   const [lastReview, setLastReview]           = useState<WeeklyReview | null>(null);
+  // Phase 7: 30-day momentum for sidebar card
+  const [momentum, setMomentum]               = useState<MomentumSummary | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -104,6 +108,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
         setTopGoalProgress(calculateGoalProgress(goal, cv));
       }
     }).finally(() => setDataLoading(false));
+
+    // Load momentum summary independently (lightweight, separate from main data)
+    getMomentumSummary(user.id).then(setMomentum).catch(() => {/* ignore */});
   }, [user]);
 
   const trackProgress = computeTrackProgress(modules);
@@ -387,6 +394,59 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateTab }) =
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Phase 7: 30-day business momentum card */}
+        {momentum && momentum.has_data && (
+          <div className="dash-momentum-card skool-card">
+            <div className="dm-header">
+              <BarChart2 size={12} />
+              <span className="dm-title">30-DAY MOMENTUM</span>
+            </div>
+            <div className="dm-stats">
+              <div className="dm-stat">
+                <span className="dm-lbl">Revenue</span>
+                <div className="dm-val-row">
+                  <span className="dm-val">
+                    {momentum.revenue_current >= 100_000
+                      ? `₹${(momentum.revenue_current / 100_000).toFixed(1)}L`
+                      : momentum.revenue_current >= 1_000
+                        ? `₹${(momentum.revenue_current / 1_000).toFixed(1)}K`
+                        : `₹${momentum.revenue_current}`}
+                  </span>
+                  {momentum.revenue_change_pct !== null && (
+                    <span className={`dm-chg ${momentum.revenue_change_pct >= 0 ? 'dm-chg-up' : 'dm-chg-dn'}`}>
+                      {momentum.revenue_change_pct >= 0
+                        ? <TrendingUp size={9} />
+                        : <TrendingDown size={9} />}
+                      {momentum.revenue_change_pct > 0 ? '+' : ''}{momentum.revenue_change_pct}%
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="dm-stat">
+                <span className="dm-lbl">Clients</span>
+                <div className="dm-val-row">
+                  <span className="dm-val">{momentum.clients_current}</span>
+                  {momentum.clients_change !== 0 && (
+                    <span className={`dm-chg ${momentum.clients_change > 0 ? 'dm-chg-up' : 'dm-chg-dn'}`}>
+                      {momentum.clients_change > 0
+                        ? <TrendingUp size={9} />
+                        : <TrendingDown size={9} />}
+                      {momentum.clients_change > 0 ? '+' : ''}{momentum.clients_change}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <button
+              className="dm-link"
+              onClick={() => onNavigateTab('analytics')}
+            >
+              Full Analytics
+              <ArrowRight size={11} />
+            </button>
           </div>
         )}
 

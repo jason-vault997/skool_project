@@ -7,6 +7,7 @@ import { ClassroomPage } from './pages/ClassroomPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { BusinessPage } from './pages/BusinessPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 import { AboutPage } from './pages/AboutPage';
 import './styles/global.css';
 
@@ -53,6 +54,8 @@ const AppShell: React.FC = () => {
         return <BusinessPage />;
       case 'leaderboard':
         return <LeaderboardPage />;
+      case 'analytics':
+        return <AnalyticsPage />;
       case 'about':
         return <AboutPage />;
       default:

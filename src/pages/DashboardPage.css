@@ -431,3 +431,90 @@
   color: var(--text-muted);
   font-weight: 500;
 }
+
+/* ── Phase 7: Momentum card ──────────────────────────────── */
+.dash-momentum-card {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dm-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.dm-title {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dm-stats {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.dm-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.dm-lbl {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.dm-val-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.dm-val {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.dm-chg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  padding: 2px 6px;
+}
+
+.dm-chg-up { background: var(--accent-emerald-soft); color: var(--accent-emerald); }
+.dm-chg-dn { background: var(--accent-rose-soft);    color: var(--accent-rose); }
+
+.dm-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-green-dark);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 120ms;
+  letter-spacing: 0.02em;
+}
+
+.dm-link:hover { opacity: 0.7; }
+

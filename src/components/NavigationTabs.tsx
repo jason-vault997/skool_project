@@ -1,7 +1,7 @@
 import React from 'react';
 import './NavigationTabs.css';
 
-export type TabId = 'dashboard' | 'classroom' | 'calendar' | 'business' | 'leaderboard' | 'about';
+export type TabId = 'dashboard' | 'classroom' | 'calendar' | 'business' | 'leaderboard' | 'analytics' | 'about';
 
 interface NavigationTabsProps {
   activeTab: TabId;
@@ -14,12 +14,13 @@ interface TabItem {
 }
 
 const TABS: TabItem[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'classroom', label: 'Classroom' },
-  { id: 'calendar', label: 'Calendar' },
-  { id: 'business', label: 'Business' },
+  { id: 'dashboard',   label: 'Dashboard' },
+  { id: 'classroom',   label: 'Classroom' },
+  { id: 'calendar',    label: 'Calendar' },
+  { id: 'business',    label: 'Business' },
   { id: 'leaderboard', label: 'Leaderboard' },
-  { id: 'about', label: 'About' }
+  { id: 'analytics',   label: 'Analytics' },
+  { id: 'about',       label: 'About' }
 ];
 
 export const NavigationTabs: React.FC<NavigationTabsProps> = ({ activeTab, onTabChange }) => {
