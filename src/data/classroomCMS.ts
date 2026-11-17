@@ -51,7 +51,7 @@ export const CLASSROOM_DATA: ClassroomBlock[] = [
         id: 'sales-mindset',
         title: 'Mindset',
         lessons: [
-          { id: 'sales-mindset-why-80-percent', title: 'Why 80% of Your Day Is Bullshit', videoId: null, durationSeconds: null, transcript: null },
+          { id: 'sales-mindset-why-80-percent', title: 'Why 80% of Your Day Is Bullshit', videoId: '0fvw5zX35FQ', durationSeconds: null, transcript: null },
           { id: 'sales-mindset-feature-not-bug', title: 'Feature Not a Bug', videoId: null, durationSeconds: null, transcript: null },
           { id: 'sales-mindset-clarity-closes', title: 'Clarity Closes Every Sale', videoId: null, durationSeconds: null, transcript: null },
           { id: 'sales-mindset-why-people-buy', title: 'Why People Buy From You', videoId: null, durationSeconds: null, transcript: null },

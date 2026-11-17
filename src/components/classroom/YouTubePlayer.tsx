@@ -73,6 +73,16 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const completedRef = useRef(false);
 
+  // Keep latest callbacks and initial start position in refs so the player
+  // does NOT destroy and recreate itself when progress updates cause parent re-renders.
+  const onProgressRef = useRef(onProgress);
+  onProgressRef.current = onProgress;
+
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  const startSecondsRef = useRef(startSeconds);
+
   const clearProgressInterval = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -89,13 +99,13 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
       const duration = player.getDuration();
       if (!duration || duration <= 0) return;
       const pct = Math.round((current / duration) * 100);
-      onProgress?.(pct, Math.round(current));
+      onProgressRef.current?.(pct, Math.round(current));
       if (pct >= COMPLETE_THRESHOLD && !completedRef.current) {
         completedRef.current = true;
-        onComplete?.();
+        onCompleteRef.current?.();
       }
     }, PROGRESS_INTERVAL);
-  }, [clearProgressInterval, onProgress, onComplete]);
+  }, [clearProgressInterval]);
 
   const initPlayer = useCallback(() => {
     if (!containerRef.current || !videoId) return;
@@ -111,11 +121,11 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         autoplay: 0,
         rel: 0,
         modestbranding: 1,
-        start: startSeconds,
+        start: startSecondsRef.current,
       },
       events: {
         onReady: ({ target }) => {
-          if (startSeconds > 0) target.seekTo(startSeconds, true);
+          if (startSecondsRef.current > 0) target.seekTo(startSecondsRef.current, true);
         },
         onStateChange: ({ data }) => {
           const state = window.YT.PlayerState;
@@ -129,14 +139,14 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
               const current = player.getCurrentTime();
               const duration = player.getDuration();
               if (duration > 0) {
-                onProgress?.(Math.round((current / duration) * 100), Math.round(current));
+                onProgressRef.current?.(Math.round((current / duration) * 100), Math.round(current));
               }
             }
           }
         },
       },
     });
-  }, [videoId, startSeconds, startProgressTracking, clearProgressInterval, onProgress]);
+  }, [videoId, startProgressTracking, clearProgressInterval]);
 
   useEffect(() => {
     if (!videoId) return;
